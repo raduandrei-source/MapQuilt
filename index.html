@@ -72,7 +72,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
   <div>
     <h1>MapQuilt</h1>
     <div class="sub">Automatic raster assembly, georeferencing and vectorisation of scanned cadastral maps in QGIS</div>
-    <div class="ver">version 0.3.23 · manual generated on 2026-11-05 from <code>06-plugin/help/mapquilt/en</code> · <a href="https://raduandrei-source.github.io/MapQuilt/">online version</a></div>
+    <div class="ver">version 0.3.26 · manual generated on 2026-11-05 from <code>06-plugin/help/mapquilt/en</code> · <a href="https://raduandrei-source.github.io/MapQuilt/">online version</a></div>
   </div>
 </header>
 <h2 id="en-what-mapquilt-is">What MapQuilt is<a class="anchor" href="#en-what-mapquilt-is" title="Permanent link">¶</a></h2>
@@ -190,6 +190,11 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <td>street centrelines with their names; a face the centreline runs through is a street, and the faces of one street are united (T20)</td>
 </tr>
 <tr>
+<td><strong>OpenStreetMap green spaces</strong> (ticked)</td>
+<td>greens</td>
+<td>parks, gardens, playgrounds (landscaped); meadow, scrub, wood (unlandscaped); tree rows and grass on narrow bands (alignment). A face without a code mostly covered by one of them gets that green class (T21)</td>
+</tr>
+<tr>
 <td>Overture Maps buildings</td>
 <td>buildings</td>
 <td>OSM plus Microsoft's machine-learning footprints where OSM has none (villages, unmapped quarters); downloaded by the Engine, slow (minutes per sheet)</td>
@@ -208,7 +213,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <li><strong>Overpass query</strong> — your own OSM query, with <code>{bbox}</code>.</li>
 <li><strong>File or QGIS data source</strong> — a GeoPackage, Shapefile, GeoJSON, or anything QGIS opens through a provider (<code>ogr</code>, <code>WFS</code>, <code>arcgisfeatureserver</code>, <code>oapif</code>…), read by QGIS for each sheet; tick <em>readable without internet</em> for a local file. This is the way for data you downloaded yourself (Copernicus Urban Atlas, a municipal or cadastral export).</li>
 </ul>
-<p>For streets, give the attribute that holds the street name (<em>Street name field</em>): faces are united street by street, by name. <strong>Edit…</strong> changes one of yours (a built-in one is copied as yours), <strong>Remove</strong> deletes one of yours.</p>
+<p>For streets, give the attribute that holds the street name (<em>Street name field</em>): faces are united street by street, by name. For green spaces, give the attribute that holds the category (<em>Green category field</em>: <code>alignment</code>, <code>landscaped</code>, <code>unlandscaped</code> or <code>grass</code>; a line counts as a tree row, i.e. alignment). <strong>Edit…</strong> changes one of yours (a built-in one is copied as yours), <strong>Remove</strong> deletes one of yours.</p>
 <p><strong>Sharing.</strong> <strong>Export…</strong> writes the selected source (or all of yours) as a small <code>.json</code> file; someone else adds it with <strong>Import…</strong>. To offer a source to every MapQuilt user, open an issue with the file in the <a href="https://github.com/raduandrei-source/MapQuilt/issues">MapQuilt repository</a>; once checked, it goes into the shared list, which <strong>Shared</strong> downloads (shared sources come unticked). Say the licence: only sources whose terms allow it are listed.</p>
 <h3 id="en-the-manual">? — the manual<a class="anchor" href="#en-the-manual" title="Permanent link">¶</a></h3>
 <p>The <strong>?</strong> button next to the tabs opens this manual: the copy shipped with the plugin (<code>mapquilt/help/index.html</code>, works without internet), or, if it is missing, the online version.</p>
@@ -220,6 +225,8 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <li><strong>Corrections</strong> — Check sheets, Move sheet with <strong>Undo last move</strong> beside it, Refine, Check placement.</li>
 </ul>
 <p>Questions name their answers on the buttons ("Only the 5 others" / "All 40 again"), never a Yes / No whose meaning you have to read twice.</p>
+<p><strong>Progress on the button.</strong> A long step (Import, Georeference, Assemble, Show rasters, Refine, Check placement, Extract, Stitch, Export) draws its progress on the button you pressed: a blue fill growing from the left, the percentage on the right, and what it is doing now in a small second line. <strong>Click the same button to stop</strong> after the current tile / sheet; what is finished stays saved and pressing it again resumes. While a step runs, the other buttons wait. On another tab, the percentage is shown on the tab of the running button (Vector · 45 %).</p>
+<p><strong>The tab bar stays in place.</strong> Each tab scrolls by itself; the tabs, the sheet list and the log share the height of the dock, and the bars between them can be dragged.</p>
 <h3 id="en-1-import">1 · Import<a class="anchor" href="#en-1-import" title="Permanent link">¶</a></h3>
 <p>Choose the folder of scans (JPG, TIF, PNG) or of already traced DXFs. For each file the plugin reads the nomenclature from the name, after cleaning it (<code>….tif.jpg</code>, <code>…_</code>, <code>- Copy</code>, <code>(2)</code>, <code>bis</code>, <code>_</code> instead of <code>-</code>); a name that does not match exactly is matched "fuzzily" against the gaps and neighbours of the series, and the probable names are flagged for checking. The N / E / S / W neighbours are computed from the nomenclature.</p>
 <ul>
@@ -317,11 +324,51 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <h3 id="en-extract-all-extract-selected">Extract all / Extract selected<a class="anchor" href="#en-extract-all-extract-selected" title="Permanent link">¶</a></h3>
 <p><strong>5 · Extract all</strong> vectorizes all sheets; with sheets already extracted it offers <strong>Extract the N others</strong> (or <strong>Resume with the N others</strong> after a Stop) and <strong>All N again</strong>. <strong>Extract selected</strong> extracts, again, only the selected sheets (in the sheet list with <kbd>Shift</kbd> / <kbd>Ctrl</kbd>+click, on the map with <strong>Select on map</strong>, the trapezoids selected in the <em>MapQuilt sheets</em> layer, or the <code>sheet …</code> rasters selected in Layers). Its label says how many sheets it will take (Extract 3 selected). With no selection, it switches Select on map on by itself.</p>
 <p>For each sheet: the scan is read through GDAL at its original resolution, the OSM footprints for the sheet's extent are taken from the cache (or downloaded once), the sheet is cut into 1600 px tiles with a 160 px overlap, each tile goes to the Engine (<code>staged</code>), the results are merged per sheet (complete faces only once, the tile core decides), and everything is written to <code>work.gpkg</code>: the <code>faces</code>, <code>edges</code>, <code>labels</code> layers in the target CRS, styled by class in the <strong>MapQuilt</strong> group.</p>
-<p>The classes: <code>building</code>, <code>annex</code> (sheds, garages, bodies marked with an X), <code>parcel</code>, <code>street</code>, <code>other</code> (the tile edge). Each face carries <code>why</code> (why it got its class: label, indicator, footprint, island, symbol, shape, line width), <code>confidence</code>, <code>review_score</code>, <code>needs_review</code>, <code>codes</code> (the codes read by OCR: C 1900, DP 1901/1 …).</p>
-<p>With the Engine running 4 OCR processes, a 1:1000 sheet takes ≈ 2.5 minutes; two tiles are sent at once. <strong>Stop</strong> stops after the current tile; pressing Extract again resumes with the remaining sheets.</p>
+<p>The classes: <code>building</code>, <code>annex</code> (sheds, garages, bodies marked with an X), <code>parcel</code>, <code>street</code>, the three green-space classes (below), <code>other</code> (the tile edge). Each face carries <code>why</code> (why it got its class: label, indicator, footprint, island, symbol, shape, line width), <code>confidence</code>, <code>review_score</code>, <code>needs_review</code>, <code>codes</code> (the codes read by OCR: C 1900, DP 1901/1 …).</p>
+<p>With the Engine running 4 OCR processes, a 1:1000 sheet takes ≈ 2.5 minutes; two tiles are sent at once. A click on the running Extract button stops after the current tile; pressing Extract again resumes with the remaining sheets.</p>
 <h3 id="en-the-selection-bar-one-selection-for-every-tab">The selection bar — one selection for every tab<a class="anchor" href="#en-the-selection-bar-one-selection-for-every-tab" title="Permanent link">¶</a></h3>
 <p>Under the tabs, above the sheet list: <strong>Select on map</strong>, how many sheets are selected, and a button that clears the selection. Select on map selects sheets directly on the map (orange outline): click on a sheet, <kbd>Shift</kbd>+click adds or removes, drag a rectangle for several (<kbd>Shift</kbd>+rectangle adds), <kbd>A</kbd> all, <kbd>Alt</kbd>+<kbd>A</kbd> none, <kbd>Esc</kbd> clears; the small box at the cursor recalls the keys. The list, Move sheet's <kbd>Shift</kbd>+click and QGIS's own selection of <em>MapQuilt sheets</em> all land in the same selection, and the buttons that use it say how many sheets they will take: Extract 3 selected, Refine 3 selected, Check placement · 3 selected.</p>
-<p>Under the list a line explains the codes <code>F G X</code> and the colours; the log under it can be made taller by dragging the bar between them. The progress bar and <strong>Stop</strong> appear only while a step runs.</p>
+<p>Under the list a line explains the codes <code>F G X</code> and the colours; the log under it can be made taller by dragging the bar between them. The progress of a step is drawn on its own button (see the Raster tab).</p>
+<h3 id="en-edit-join-faces">Edit — Join faces<a class="anchor" href="#en-edit-join-faces" title="Permanent link">¶</a></h3>
+<p>Two faces that should be one (a parcel cut in two by a fence line, a block split by a drawn line, two pieces of the same green space): <strong>Join faces</strong> in the Edit box, then on the map <strong>press inside one face, drag onto its neighbour and release</strong>. While you drag, the face you started from is orange and the face under the cursor green when they can be joined, red when they cannot; the small box at the cursor says why (another class, not neighbours, touching only at a point).</p>
+<ul>
+<li>Only faces of the <strong>same class</strong> that touch (gaps up to 0.3 m left by simplification are closed) are joined. To join a building and a parcel, change one of them in Review first.</li>
+<li>The first face keeps its row: its geometry becomes the union, the codes of both are kept, buildings and annexes are counted together, the review state becomes <em>edited</em>, the note says which face was joined in. The other face is deleted.</li>
+<li><kbd>Ctrl</kbd>+<kbd>Z</kbd> on the map, or <strong>Undo join</strong>, puts the two faces back (the last 50 joins). <kbd>Esc</kbd> cancels a drag, then leaves the tool. Every join and undo is written in the project journal.</li>
+<li>The drawn lines (the <code>edges</code> layer) are not touched: only the faces are joined.</li>
+</ul>
+<h3 id="en-green-spaces-three-categories">Green spaces — three categories<a class="anchor" href="#en-green-spaces-three-categories" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Romanian</th>
+<th>What it is</th>
+<th>From OSM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>green_alignment</code></td>
+<td>spațiu verde de aliniament</td>
+<td>along a street: tree rows, grass strips between carriageway and sidewalk</td>
+<td><code>natural=tree_row</code>; <code>landuse=grass</code> on a band narrower than 8 m</td>
+</tr>
+<tr>
+<td><code>green_landscaped</code></td>
+<td>spațiu verde amenajat</td>
+<td>laid out and kept: park, garden, square, playground, sports lawn</td>
+<td><code>leisure=park/garden/playground/pitch</code>, <code>landuse=recreation_ground/village_green/flowerbed</code>; <code>landuse=grass</code> wider than 8 m</td>
+</tr>
+<tr>
+<td><code>green_unlandscaped</code></td>
+<td>spațiu verde neamenajat</td>
+<td>left to grow: meadow, scrub, wood, waste ground</td>
+<td><code>landuse=meadow/forest</code>, <code>natural=scrub/grassland/heath/wood</code></td>
+</tr>
+</tbody>
+</table>
+<p>A face gets a green class only when it has no code (an uncoded parcel, or a strip found as a street by its shape) and at least half of it lies in green spaces of one category. A coded parcel stays a parcel: the cadastre says what it is, OSM only what grows on it, so it gets the category in the <code>green</code> attribute instead. Green faces come with a lower confidence and go into the review queue; there the keys <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> give them a category by hand (also to faces OSM does not know). In the DXF each category is a layer of its own.</p>
 <h3 id="en-review-the-uncertain-faces">Review — the uncertain faces<a class="anchor" href="#en-review-the-uncertain-faces" title="Permanent link">¶</a></h3>
 <p>The Review box appears once a sheet is extracted. <strong>Next</strong> (<kbd>N</kbd>) jumps to the most uncertain face (by <code>review_score</code>), over the scan and the satellite image. Then you decide, with the button or its key (the keys work while a face is under review, on the map and in the dock; <kbd>Esc</kbd> stops):</p>
 <table>
@@ -337,7 +384,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <td>the face is right as it is (also when it does not match the satellite image: the plan is the historical truth)</td>
 </tr>
 <tr>
-<td><strong>Building</strong> <kbd>B</kbd> / <strong>Parcel</strong> <kbd>P</kbd> / <strong>Annex</strong> <kbd>A</kbd> / <strong>Street</strong> <kbd>S</kbd></td>
+<td><strong>Building</strong> <kbd>B</kbd> / <strong>Parcel</strong> <kbd>P</kbd> / <strong>Annex</strong> <kbd>A</kbd> / <strong>Street</strong> <kbd>S</kbd> / <strong>Green</strong> <kbd>1</kbd> alignment, <kbd>2</kbd> landscaped, <kbd>3</kbd> unlandscaped</td>
 <td>the shape is right, the class was wrong; the plugin changes it and marks the face as confirmed</td>
 </tr>
 <tr>
@@ -418,7 +465,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <p><strong>The seams of one sheet are red.</strong> The frame is on the wrong line (Rectify / Refine), the scan is rotated (Check placement) or the nomenclature is wrong (Move sheet). A single red seam between two good sheets can also be an old sheet scanned from a different original.</p>
 <p><strong>Apartment blocks appear as parcels (blue) or cut into pieces.</strong> The plan draws the block with a double line and one code per stairwell, while OSM knows it as a single polygon. Since the Engine version with T19, building faces from the same OSM footprint are merged, and the 1500 m² cap of the footprint rule no longer exists; restart the Engine so it picks up the new code, and extract the sheet again.</p>
 <p><strong>"original not found".</strong> The scans have moved: ⚙ › Scans folder › Set…. Check sheets tells you which sheets cannot be found.</p>
-<p><strong>A street comes out in several pieces.</strong> Since the Engine version with T20, the faces a street's centreline runs through are united street by street. Check that <em>OpenStreetMap streets</em> is ticked in ⚙ › External sources, restart the Engine, and extract the sheet again. A street missing from OSM, or a street that did not exist when the plan was drawn, stays as the plan has it.</p>
+<p><strong>A street comes out in several pieces.</strong> Since the Engine version with T20, the faces a street's centreline runs through are united street by street. Check that <em>OpenStreetMap streets</em> is ticked in ⚙ › External sources, restart the Engine, and extract the sheet again. A street missing from OSM, or a street that did not exist when the plan was drawn, stays as the plan has it; so does a piece where OSM rides on the kerb (the drawing wins over OSM).</p>
 <p><strong>Overpass does not answer, Extract waits.</strong> Only the first sheet in the run waits; the others use the cache. Set Work: Offline so that it does not wait at all. Overpass sometimes answers 'at capacity' for a few minutes; Extract the sheet again later.</p>
 <p><strong>The DXF comes out empty.</strong> Versions before 0.3.14 exported directly from the GeoPackage in WAL mode; now the layers are copied into memory. If it persists, close the <code>work.gpkg</code> layers in other applications.</p>
 <p><strong>The Rectify dialog confirmed a wrong frame and I moved on.</strong> ◀ Previous goes back to the sheet you left last, with its frame; correct it and confirm again (the SEMI-AUTO pattern is relearned from it).</p>
@@ -430,7 +477,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <li><strong>Annotations</strong> — texts and indicator circles are detected and masked; the lines they interrupt are restored ("bridging").</li>
 <li><strong>Line width</strong> — the distance to the background on the cleaned ink, before thinning; the Otsu threshold separates thick lines (building outlines) from thin ones (boundaries).</li>
 <li><strong>Skeleton → shared edges</strong> — thinning, pruning of short branches (vectorized: 340 s → 2 s per sheet), snapping of loose ends, pixel segments joined into polylines between junctions, simplified with fixed ends.</li>
-<li><strong>Faces and classes</strong> — polygonization of the edges; each face gets its class from, in order: the label inside (C → building, DS/DP → street, CR/CC/CAT → parcel), the circled indicator, a street centreline running through the face along its length and away from its edges (T20), the coverage by the OSM footprint (registered locally on the skeleton), topology (an island in a void is a building), shape (long strips = streets), the outline width; small faces with an X are annexes. 3a (T19): building faces from the same OSM footprint are merged. 3a′ (T20): the street faces of one street (same name, else same way) that touch are merged, with the narrow street strips beside them. 3b (T12): simplification / orthogonalization on the graph, with fixed junctions.</li>
+<li><strong>Faces and classes</strong> — polygonization of the edges; each face gets its class from, in order: the label inside (C → building, DS/DP → street, CR/CC/CAT → parcel), the circled indicator, a street centreline running through the face along its length and away from its edges (T20), the coverage by the OSM footprint (registered locally on the skeleton), topology (an island in a void is a building), shape (long strips = streets), the outline width; small faces with an X are annexes. 3a (T19): building faces from the same OSM footprint are merged. 3a′ (T20): the street faces of one street (same name, else same way) that touch are merged — only across a line the centreline crosses at 45° or more, so a kerb or sidewalk line along the street stays even where OSM rides on it (T20b); a band narrower than 3.5 m (a sidewalk) is never called a street by the centreline alone, and sidewalk strips are not joined to the carriageway. 3c (T21): a face without a code, at least half in OSM green spaces of one category, becomes <code>green_alignment</code>, <code>green_landscaped</code> or <code>green_unlandscaped</code>; a coded parcel only gets the category as an attribute. 3b (T12): simplification / orthogonalization on the graph, with fixed junctions.</li>
 <li><strong>Dissolve</strong> — buildings are attached to the host parcel with the longest shared side; uncoded strips are merged into their neighbour.</li>
 </ol>
 <p>Measured on the Țicău tile against the reference drawing made in Rhino: building PQ 0.64 (precision 0.80, recall 0.66, mean IoU 0.89); parcels 0.34; the fraction of shared outline went from 0 to 0.63 with the move to the planar graph (T6b).</p>
@@ -470,7 +517,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <h3 id="en-measuring-the-result">Measuring the result<a class="anchor" href="#en-measuring-the-result" title="Permanent link">¶</a></h3>
 <ul>
 <li>Alexander Kirillov, Kaiming He, Ross Girshick, Carsten Rother and Piotr Dollár, "Panoptic Segmentation", in <em>CVPR 2019</em> (IEEE, 2019), 9396–9405, <a href="https://doi.org/10.1109/CVPR.2019.00963">https://doi.org/10.1109/CVPR.2019.00963</a>. PQ = SQ × RQ, the per-class metric against the reference drawing.</li>
-<li>OpenStreetMap contributors, <em>OpenStreetMap</em>, <a href="https://www.openstreetmap.org">https://www.openstreetmap.org</a>, ODbL. Building footprints as a class hint and as a witness for the sheet rotation; street centrelines for the street faces (T20).</li>
+<li>OpenStreetMap contributors, <em>OpenStreetMap</em>, <a href="https://www.openstreetmap.org">https://www.openstreetmap.org</a>, ODbL. Building footprints as a class hint and as a witness for the sheet rotation; street centrelines for the street faces (T20); green spaces in three categories (T21).</li>
 <li>Overture Maps Foundation, <em>Overture Maps data</em> (buildings, transportation), <a href="https://overturemaps.org">https://overturemaps.org</a>, ODbL / CDLA-Permissive-2.0. Optional external source.</li>
 <li>RapidOCR, <a href="https://github.com/RapidAI/RapidOCR">https://github.com/RapidAI/RapidOCR</a>. Code recognition (ONNX, on the CPU).</li>
 </ul>
@@ -481,6 +528,9 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <h2 id="en-changelog">Changelog<a class="anchor" href="#en-changelog" title="Permanent link">¶</a></h2>
 <p>From the plugin's <code>metadata.txt</code>, newest first.</p>
 <ul class="changelog">
+<li><span class="version">0.3.26</span><span class="when">2026-11-05</span> — Join faces (Vector tab, Edit box): press inside a face, drag onto a neighbour of the same class and release - the two become one (codes of both, buildings counted together, review state edited); green while they can be joined, red with the reason in the box at the cursor when not; gaps up to 0.3 m closed; Ctrl+Z on the map or Undo join puts them back (last 50); every join in the journal.</li>
+<li><span class="version">0.3.25</span><span class="when">2026-11-05</span> — Green spaces in three categories (Engine T21): green_alignment (tree rows, grass strips along streets), green_landscaped (parks, gardens, playgrounds), green_unlandscaped (meadow, scrub, wood). New external source OpenStreetMap green spaces (ticked); a face without a code at least half in one category gets that class, a coded parcel keeps its class and gets the category in the attribute &#x27;green&#x27;. Own green sources with a category field. Review: buttons and keys 1 / 2 / 3; each category styled and written as its own DXF layer.</li>
+<li><span class="version">0.3.24</span><span class="when">2026-11-05</span> — The progress of a long step is drawn on the button that started it (blue fill, percent, what it does now in a second line); a click on that button stops it; meanwhile the other buttons wait; on another tab the percent is on the tab of the running button. The tab bar stays in place: every tab page scrolls by itself, and the tabs, the sheet list and the log share the dock through splitters. Engine T20b: OSM centrelines no longer spoil the drawing where they ride on kerbs and sidewalks - street faces are united only across lines the centreline crosses at 45 degrees or more, a band under 3.5 m is never a street by the centreline alone, sidewalk strips are not joined to the carriageway.</li>
 <li><span class="version">0.3.23</span><span class="when">2026-11-05</span> — Dock made easier to use. Steps numbered 1-7 in their real order (Georeference before Assemble), each with its state written on the button (12/40 frames, 2 red seams...) and the next step outlined. Raster tab in three boxes: Steps, View (Show rasters as a toggle, Satellite + OSM, opacity), Corrections (Check sheets, Move sheet, Undo last move, Refine, Check placement) with QGIS icons. One selection bar under the tabs (Select on map, how many selected, clear), and the buttons say how many sheets they take (Extract 3 selected). Questions name their answers on the buttons instead of Yes / No / Cancel; Move sheet and Check placement turns are applied at once and put back by Undo last move (Ctrl+Z on the map, last 20). Move sheet / Select on map: a small box beside the cursor lists the keys - R turns 90 (with a selection it picks it up and turns it), Shift+R back, G, A all, Alt+A none, Esc, Ctrl+Z. Review appears after Extract, with keys (N next, Enter confirm, B P A S class, X reject, Esc). Progress bar and Stop only while a step runs; the log can be made taller; a legend under the sheet list. Engine: Test connection, Start Engine / Stop Engine on their own row; ? opens the manual without freezing QGIS; Rhino sync buttons in a 2 x 2 grid.</li>
 <li><span class="version">0.3.22</span><span class="when">2026-11-05</span> — External sources (⚙ Settings): building footprints and street centrelines chosen per project - OpenStreetMap buildings and streets (ticked), Overture Maps buildings and streets (through the Engine), and your own: WFS, ArcGIS FeatureServer, OGC API Features, an Overpass query, or any file / QGIS data source; Add / Edit / Remove, Import / Export as .json to give to others, Shared downloads the list other users sent in. Every answer cached per sheet in the project. Streets (Engine T20): a face the centreline runs through, along its length and away from its edges, is a street, and the street faces of one street (same name) are united with their sidewalk strips, one street one face per tile.</li>
 <li><span class="version">0.3.21</span><span class="when">2026-11-04</span> — The dock in tabs: the gear (Settings: project, scans folder with Set..., Engine local / cloud with its own address, Check with what the Engine answered, Start; work mode Online / Offline, offline = OSM footprints from the project cache only and no web layers), Raster, Vector (with the Review box), Rhino sync (only when the Rhino Sync plugin is installed), and a &#x27;?&#x27; button beside the tabs that opens the manual shipped in mapquilt/help (generated from 06-plugin/help with build_help.py: sections, literature, changelog; also published with GitHub Pages).</li>
@@ -517,7 +567,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
   <div>
     <h1>MapQuilt</h1>
     <div class="sub">Asamblare raster, georeferențiere și vectorizare automată a planurilor cadastrale scanate, în QGIS</div>
-    <div class="ver">versiunea 0.3.23 · manual generat la 2026-11-05 din <code>06-plugin/help/mapquilt/ro</code> · <a href="https://raduandrei-source.github.io/MapQuilt/">varianta online</a></div>
+    <div class="ver">versiunea 0.3.26 · manual generat la 2026-11-05 din <code>06-plugin/help/mapquilt/ro</code> · <a href="https://raduandrei-source.github.io/MapQuilt/">varianta online</a></div>
   </div>
 </header>
 <h2 id="ro-ce-este-mapquilt">Ce este MapQuilt<a class="anchor" href="#ro-ce-este-mapquilt" title="Permanent link">¶</a></h2>
@@ -635,6 +685,11 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <td>axele străzilor, cu numele lor; o față străbătută de axă e stradă, iar fețele aceleiași străzi se unesc (T20)</td>
 </tr>
 <tr>
+<td><strong>OpenStreetMap green spaces</strong> (bifată)</td>
+<td>spații verzi</td>
+<td>parcuri, grădini, locuri de joacă (amenajate); pajiști, tufărișuri, păduri (neamenajate); șiruri de arbori și iarbă pe fâșii înguste (de aliniament). O față fără cod acoperită în mare parte de una dintre ele primește clasa verde respectivă (T21)</td>
+</tr>
+<tr>
 <td>Overture Maps buildings</td>
 <td>clădiri</td>
 <td>OSM plus amprentele Microsoft detectate automat unde OSM nu are (sate, cartiere necartate); descărcate de Engine, lent (minute pe foaie)</td>
@@ -653,7 +708,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <li><strong>Overpass query</strong> — o interogare OSM proprie, cu <code>{bbox}</code>.</li>
 <li><strong>File or QGIS data source</strong> — un GeoPackage, Shapefile, GeoJSON sau orice deschide QGIS printr-un furnizor (<code>ogr</code>, <code>WFS</code>, <code>arcgisfeatureserver</code>, <code>oapif</code>…), citit de QGIS pentru fiecare foaie; bifați <em>readable without internet</em> pentru un fișier local. Așa intră datele descărcate de dvs. (Copernicus Urban Atlas, un export al primăriei sau al cadastrului).</li>
 </ul>
-<p>La străzi, dați atributul care ține numele străzii (<em>Street name field</em>): fețele se unesc stradă cu stradă, după nume. <strong>Edit…</strong> modifică una de-a dvs. (una din plugin se copiază ca a dvs.), <strong>Remove</strong> șterge una de-a dvs.</p>
+<p>La străzi, dați atributul care ține numele străzii (<em>Street name field</em>): fețele se unesc stradă cu stradă, după nume. La spațiile verzi, dați atributul care ține categoria (<em>Green category field</em>: <code>alignment</code>, <code>landscaped</code>, <code>unlandscaped</code> sau <code>grass</code>; o linie contează ca șir de arbori, adică de aliniament). <strong>Edit…</strong> modifică una de-a dvs. (una din plugin se copiază ca a dvs.), <strong>Remove</strong> șterge una de-a dvs.</p>
 <p><strong>Partajare.</strong> <strong>Export…</strong> scrie sursa selectată (sau toate ale dvs.) ca un fișier <code>.json</code> mic; altcineva o adaugă cu <strong>Import…</strong>. Ca să oferiți o sursă tuturor utilizatorilor MapQuilt, deschideți un issue cu fișierul în <a href="https://github.com/raduandrei-source/MapQuilt/issues">depozitul MapQuilt</a>; după verificare, intră în lista comună, pe care <strong>Shared</strong> o descarcă (sursele comune vin nebifate). Spuneți licența: se listează doar sursele ai căror termeni permit asta.</p>
 <h3 id="ro-manualul">? — manualul<a class="anchor" href="#ro-manualul" title="Permanent link">¶</a></h3>
 <p>Butonul <strong>?</strong> de lângă taburi deschide acest manual: copia livrată cu pluginul (<code>mapquilt/help/index.html</code>, merge fără internet), iar dacă lipsește, varianta online.</p>
@@ -666,6 +721,8 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <li><strong>Corrections</strong> — Check sheets, Move sheet cu <strong>Undo last move</strong> alături, Refine, Check placement.</li>
 </ul>
 <p>Întrebările își scriu răspunsurile pe butoane („Only the 5 others” / „All 40 again”), nu mai e nicio întrebare Yes / No care trebuie citită de două ori.</p>
+<p><strong>Progresul pe buton.</strong> Un pas lung (Import, Georeference, Assemble, Show rasters, Refine, Check placement, Extract, Stitch, Export) își desenează progresul chiar pe butonul apăsat: o umplere albastră care crește de la stânga, procentul în dreapta și, pe un al doilea rând mic, ce face acum. <strong>Un clic pe același buton oprește</strong> după dala / foaia curentă; ce s-a terminat rămâne salvat, iar o nouă apăsare continuă. Cât rulează un pas, celelalte butoane așteaptă. Pe alt tab, procentul apare pe tabul butonului care rulează (Vector · 45 %).</p>
+<p><strong>Bara de taburi stă pe loc.</strong> Fiecare tab derulează singur; taburile, lista de foi și log-ul își împart înălțimea dock-ului, iar barele dintre ele se pot trage.</p>
 <h3 id="ro-1-import">1 · Import<a class="anchor" href="#ro-1-import" title="Permanent link">¶</a></h3>
 <p>Alegeți folderul scanărilor (JPG, TIF, PNG) sau al DXF-urilor deja trasate. Pentru fiecare fișier pluginul citește nomenclatura din nume, după ce îl curăță (<code>….tif.jpg</code>, <code>…_</code>, <code>- Copy</code>, <code>(2)</code>, <code>bis</code>, <code>_</code> în loc de <code>-</code>); un nume care nu se potrivește exact e potrivit „fuzzy” cu golurile și vecinii seriei, iar numele probabile se marchează pentru verificare. Vecinii N / E / S / V se calculează din nomenclatură.</p>
 <ul>
@@ -763,11 +820,51 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <h3 id="ro-extract-all-extract-selected">Extract all / Extract selected<a class="anchor" href="#ro-extract-all-extract-selected" title="Permanent link">¶</a></h3>
 <p><strong>5 · Extract all</strong> vectorizează toate foile; cu foi deja extrase oferă <strong>Extract the N others</strong> (sau <strong>Resume with the N others</strong> după un Stop) și <strong>All N again</strong>. <strong>Extract selected</strong> extrage, din nou, doar foile selectate (în lista de foi cu <kbd>Shift</kbd> / <kbd>Ctrl</kbd>+clic, pe hartă cu <strong>Select on map</strong>, trapezele selectate în stratul <em>MapQuilt sheets</em> sau rasterele <code>sheet …</code> selectate în Layers). Eticheta lui spune câte foi ia (Extract 3 selected). Fără selecție, pornește singur Select on map.</p>
 <p>Pentru fiecare foaie: scanarea e citită prin GDAL la rezoluția originală, amprentele OSM ale întinderii foii se iau din cache (sau se descarcă o dată), foaia se taie în dale de 1600 px cu suprapunere de 160 px, fiecare dală merge la Engine (<code>staged</code>), rezultatele se unesc pe foaie (fețele complete o singură dată, nucleul dalei decide), și totul se scrie în <code>work.gpkg</code>: straturile <code>faces</code>, <code>edges</code>, <code>labels</code> în CRS-ul țintă, stilizate pe clase în grupul <strong>MapQuilt</strong>.</p>
-<p>Clasele: <code>building</code>, <code>annex</code> (șoproane, garaje, corpuri cu X), <code>parcel</code>, <code>street</code>, <code>other</code> (marginea dalei). Fiecare față poartă <code>why</code> (de ce a primit clasa: etichetă, indicator, amprentă, insulă, simbol, formă, grosimea liniei), <code>confidence</code>, <code>review_score</code>, <code>needs_review</code>, <code>codes</code> (codurile citite prin OCR: C 1900, DP 1901/1 …).</p>
-<p>Cu Engine-ul cu 4 procese OCR, o foaie 1:1000 durează ≈ 2,5 minute; se trimit două dale deodată. <strong>Stop</strong> oprește după dala curentă; Extract apăsat din nou reia cu foile rămase.</p>
+<p>Clasele: <code>building</code>, <code>annex</code> (șoproane, garaje, corpuri cu X), <code>parcel</code>, <code>street</code>, cele trei clase de spații verzi (mai jos), <code>other</code> (marginea dalei). Fiecare față poartă <code>why</code> (de ce a primit clasa: etichetă, indicator, amprentă, insulă, simbol, formă, grosimea liniei), <code>confidence</code>, <code>review_score</code>, <code>needs_review</code>, <code>codes</code> (codurile citite prin OCR: C 1900, DP 1901/1 …).</p>
+<p>Cu Engine-ul cu 4 procese OCR, o foaie 1:1000 durează ≈ 2,5 minute; se trimit două dale deodată. Un clic pe butonul Extract care rulează oprește după dala curentă; Extract apăsat din nou reia cu foile rămase.</p>
 <h3 id="ro-bara-de-selecție-o-singură-selecție-pentru-toate-taburile">Bara de selecție — o singură selecție pentru toate taburile<a class="anchor" href="#ro-bara-de-selecție-o-singură-selecție-pentru-toate-taburile" title="Permanent link">¶</a></h3>
 <p>Sub taburi, deasupra listei de foi: <strong>Select on map</strong>, câte foi sunt selectate și un buton care golește selecția. Select on map selectează foile direct pe hartă (contur portocaliu): clic pe o foaie, <kbd>Shift</kbd>+clic adaugă sau scoate, trageți un dreptunghi pentru mai multe (<kbd>Shift</kbd>+dreptunghi adaugă), <kbd>A</kbd> toate, <kbd>Alt</kbd>+<kbd>A</kbd> niciuna, <kbd>Esc</kbd> golește; caseta mică de lângă cursor amintește tastele. Lista, <kbd>Shift</kbd>+clic din Move sheet și selecția QGIS pe <em>MapQuilt sheets</em> ajung în aceeași selecție, iar butoanele care o folosesc spun câte foi iau: Extract 3 selected, Refine 3 selected, Check placement · 3 selected.</p>
-<p>Sub listă, un rând explică codurile <code>F G X</code> și culorile; log-ul de dedesubt se mărește trăgând de bara dintre ele. Bara de progres și <strong>Stop</strong> apar doar cât rulează un pas.</p>
+<p>Sub listă, un rând explică codurile <code>F G X</code> și culorile; log-ul de dedesubt se mărește trăgând de bara dintre ele. Progresul unui pas se desenează pe butonul lui (vezi tabul Raster).</p>
+<h3 id="ro-edit-join-faces-unirea-fețelor">Edit — Join faces (unirea fețelor)<a class="anchor" href="#ro-edit-join-faces-unirea-fețelor" title="Permanent link">¶</a></h3>
+<p>Două fețe care ar trebui să fie una (o parcelă tăiată în două de linia unui gard, un bloc despărțit de o linie desenată, două bucăți ale aceluiași spațiu verde): <strong>Join faces</strong> din caseta Edit, apoi pe hartă <strong>apăsați într-o față, trageți peste vecina ei și eliberați</strong>. Cât trageți, fața de pornire e portocalie, iar fața de sub cursor verde când se pot uni și roșie când nu; caseta mică de lângă cursor spune de ce (altă clasă, nu sunt vecine, se ating doar într-un punct).</p>
+<ul>
+<li>Se unesc doar fețe din <strong>aceeași clasă</strong> care se ating (golurile de până la 0,3 m lăsate de simplificare se închid). Ca să uniți o clădire cu o parcelă, schimbați întâi clasa uneia în Review.</li>
+<li>Prima față își păstrează rândul: geometria devine reuniunea, codurile amândurora rămân, clădirile și anexele se adună, starea de revizuire devine <em>edited</em>, iar nota spune ce față s-a unit cu ea. Cealaltă față se șterge.</li>
+<li><kbd>Ctrl</kbd>+<kbd>Z</kbd> pe hartă, sau <strong>Undo join</strong>, pune cele două fețe la loc (ultimele 50 de uniri). <kbd>Esc</kbd> renunță la o tragere, apoi iese din unealtă. Fiecare unire și anulare se scrie în jurnalul proiectului.</li>
+<li>Liniile desenate (stratul <code>edges</code>) nu se ating: se unesc doar fețele.</li>
+</ul>
+<h3 id="ro-spațiile-verzi-trei-categorii">Spațiile verzi — trei categorii<a class="anchor" href="#ro-spațiile-verzi-trei-categorii" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Clasă</th>
+<th>În română</th>
+<th>Ce este</th>
+<th>Din OSM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>green_alignment</code></td>
+<td>spațiu verde de aliniament</td>
+<td>de-a lungul străzii: șiruri de arbori, fâșii de iarbă între carosabil și trotuar</td>
+<td><code>natural=tree_row</code>; <code>landuse=grass</code> pe o fâșie mai îngustă de 8 m</td>
+</tr>
+<tr>
+<td><code>green_landscaped</code></td>
+<td>spațiu verde amenajat</td>
+<td>amenajat și întreținut: parc, grădină, scuar, loc de joacă, gazon de sport</td>
+<td><code>leisure=park/garden/playground/pitch</code>, <code>landuse=recreation_ground/village_green/flowerbed</code>; <code>landuse=grass</code> mai lat de 8 m</td>
+</tr>
+<tr>
+<td><code>green_unlandscaped</code></td>
+<td>spațiu verde neamenajat</td>
+<td>lăsat să crească: pajiște, tufăriș, pădure, teren viran</td>
+<td><code>landuse=meadow/forest</code>, <code>natural=scrub/grassland/heath/wood</code></td>
+</tr>
+</tbody>
+</table>
+<p>O față primește o clasă verde doar dacă nu are cod (o parcelă necodată, sau o fâșie găsită ca stradă după formă) și cel puțin jumătate din ea stă în spații verzi de aceeași categorie. O parcelă codată rămâne parcelă: cadastrul spune ce este, OSM doar ce crește pe ea, așa că primește categoria în atributul <code>green</code>. Fețele verzi au o încredere mai mică și intră în coada de revizuire; acolo tastele <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> le dau categoria de mână (și fețelor pe care OSM nu le știe). În DXF fiecare categorie are stratul ei.</p>
 <h3 id="ro-review-fețele-nesigure">Review — fețele nesigure<a class="anchor" href="#ro-review-fețele-nesigure" title="Permanent link">¶</a></h3>
 <p>Caseta Review apare după ce o foaie e extrasă. <strong>Next</strong> (<kbd>N</kbd>) sare la fața cea mai incertă (după <code>review_score</code>), peste scanare și satelit. Apoi decideți, cu butonul sau cu tasta lui (tastele merg cât timp o față e în revizuire, pe hartă și în dock; <kbd>Esc</kbd> oprește):</p>
 <table>
@@ -783,7 +880,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <td>fața e bună așa cum e (și atunci când nu se potrivește cu satelitul: planul e adevărul istoric)</td>
 </tr>
 <tr>
-<td><strong>Building</strong> <kbd>B</kbd> / <strong>Parcel</strong> <kbd>P</kbd> / <strong>Annex</strong> <kbd>A</kbd> / <strong>Street</strong> <kbd>S</kbd></td>
+<td><strong>Building</strong> <kbd>B</kbd> / <strong>Parcel</strong> <kbd>P</kbd> / <strong>Annex</strong> <kbd>A</kbd> / <strong>Street</strong> <kbd>S</kbd> / <strong>Green</strong> <kbd>1</kbd> aliniament, <kbd>2</kbd> amenajat, <kbd>3</kbd> neamenajat</td>
 <td>forma e bună, clasa era greșită; pluginul o schimbă și marchează fața confirmată</td>
 </tr>
 <tr>
@@ -864,7 +961,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <p><strong>Cusăturile sunt roșii pe o foaie.</strong> Cadrul e pe linia greșită (Rectify / Refine), scanarea e rotită (Check placement) sau nomenclatura e greșită (Move sheet). O singură cusătură roșie între două foi bune poate fi și o foaie veche scanată de pe un original diferit.</p>
 <p><strong>Blocurile apar ca parcele (albastre) sau tăiate în bucăți.</strong> Planul desenează blocul cu linie dublă și un cod pe scară, iar OSM îl știe ca un poligon. Din versiunea Engine cu T19, fețele clădire din aceeași amprentă OSM se unesc, iar plafonul de 1500 m² al regulii amprentei nu mai există; reporniți Engine-ul ca să ia codul nou și extrageți din nou foaia.</p>
 <p><strong>„original not found”.</strong> Scanările s-au mutat: ⚙ › Scans folder › Set…. Check sheets spune care foi nu se regăsesc.</p>
-<p><strong>O stradă iese în mai multe bucăți.</strong> Din versiunea Engine cu T20, fețele străbătute de axa unei străzi se unesc stradă cu stradă. Verificați că <em>OpenStreetMap streets</em> e bifată în ⚙ › External sources, reporniți Engine-ul și extrageți din nou foaia. O stradă care lipsește din OSM, sau care nu exista când s-a desenat planul, rămâne cum o are planul.</p>
+<p><strong>O stradă iese în mai multe bucăți.</strong> Din versiunea Engine cu T20, fețele străbătute de axa unei străzi se unesc stradă cu stradă. Verificați că <em>OpenStreetMap streets</em> e bifată în ⚙ › External sources, reporniți Engine-ul și extrageți din nou foaia. O stradă care lipsește din OSM, sau care nu exista când s-a desenat planul, rămâne cum o are planul; la fel o bucată pe care OSM calcă bordura (desenul are întâietate față de OSM).</p>
 <p><strong>Overpass nu răspunde, Extract așteaptă.</strong> Doar prima foaie din rulare mai așteaptă; celelalte folosesc cache-ul. Setați Work: Offline ca să nu aștepte deloc. Overpass răspunde uneori „at capacity” câteva minute; extrageți foaia din nou mai târziu.</p>
 <p><strong>DXF-ul iese gol.</strong> Versiunile dinainte de 0.3.14 exportau direct din GeoPackage-ul în mod WAL; acum straturile se copiază în memorie. Dacă persistă, închideți straturile <code>work.gpkg</code> din alte aplicații.</p>
 <p><strong>Dialogul Rectify a confirmat un cadru greșit și am trecut mai departe.</strong> ◀ Previous se întoarce la foaia părăsită ultima dată, cu cadrul ei; corectați și confirmați din nou (tiparul SEMI-AUTO se reînvață de pe ea).</p>
@@ -876,7 +973,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <li><strong>Adnotări</strong> — textele și cercurile-indicator se detectează și se mască; liniile întrerupte de ele se refac („bridging”).</li>
 <li><strong>Grosimea liniei</strong> — distanța până la fundal pe cerneala curățată, înainte de subțiere; pragul Otsu desparte liniile groase (contur de clădire) de cele subțiri (limite).</li>
 <li><strong>Scheletul → muchii comune</strong> — subțiere, tăierea ramurilor scurte (vectorizat: 340 s → 2 s pe foaie), lipirea capetelor libere, segmente de pixeli unite în polilinii între joncțiuni, simplificate cu capetele fixe.</li>
-<li><strong>Fețe și clase</strong> — poligonizarea muchiilor; fiecare față primește clasa după, în ordine: eticheta din interior (C → clădire, DS/DP → stradă, CR/CC/CAT → parcelă), indicatorul în cerc, axa unei străzi care străbate fața pe lungime, departe de margini (T20), acoperirea amprentei OSM (înregistrată local pe schelet), topologia (o insulă într-un gol e clădire), forma (benzi lungi = străzi), grosimea conturului; fețele mici cu X sunt anexe. 3a (T19): fețele clădire din aceeași amprentă OSM se unesc. 3a′ (T20): fețele stradă ale aceleiași străzi (același nume, altfel aceeași cale OSM) care se ating se unesc, cu fâșiile înguste de stradă de lângă ele. 3b (T12): simplificare / ortogonalizare pe graf, cu joncțiunile fixe.</li>
+<li><strong>Fețe și clase</strong> — poligonizarea muchiilor; fiecare față primește clasa după, în ordine: eticheta din interior (C → clădire, DS/DP → stradă, CR/CC/CAT → parcelă), indicatorul în cerc, axa unei străzi care străbate fața pe lungime, departe de margini (T20), acoperirea amprentei OSM (înregistrată local pe schelet), topologia (o insulă într-un gol e clădire), forma (benzi lungi = străzi), grosimea conturului; fețele mici cu X sunt anexe. 3a (T19): fețele clădire din aceeași amprentă OSM se unesc. 3a′ (T20): fețele stradă ale aceleiași străzi (același nume, altfel aceeași cale OSM) care se ating se unesc — doar peste o linie pe care axa o taie la 45° sau mai mult, așa că o bordură sau linia unui trotuar de-a lungul străzii rămâne și acolo unde OSM o calcă (T20b); o fâșie mai îngustă de 3,5 m (un trotuar) nu devine stradă doar din axă, iar trotuarele nu se lipesc de carosabil. 3c (T21): o față fără cod, cel puțin pe jumătate în spații verzi OSM de aceeași categorie, devine <code>green_alignment</code>, <code>green_landscaped</code> sau <code>green_unlandscaped</code>; o parcelă codată primește doar categoria ca atribut. 3b (T12): simplificare / ortogonalizare pe graf, cu joncțiunile fixe.</li>
 <li><strong>Dizolvare</strong> — clădirile se atașează parcelei-gazdă cu latura comună cea mai lungă; fâșiile necodate se varsă în vecin.</li>
 </ol>
 <p>Măsurat pe dala Țicău față de etalonul desenat în Rhino: PQ clădiri 0,64 (precizie 0,80, regăsire 0,66, IoU mediu 0,89); parcele 0,34; fracția de contur partajat 0 → 0,63 prin trecerea la graful planar (T6b).</p>
@@ -916,7 +1013,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <h3 id="ro-măsurarea-rezultatului">Măsurarea rezultatului<a class="anchor" href="#ro-măsurarea-rezultatului" title="Permanent link">¶</a></h3>
 <ul>
 <li>Alexander Kirillov, Kaiming He, Ross Girshick, Carsten Rother și Piotr Dollár, „Panoptic Segmentation”, în <em>CVPR 2019</em> (IEEE, 2019), 9396–9405, <a href="https://doi.org/10.1109/CVPR.2019.00963">https://doi.org/10.1109/CVPR.2019.00963</a>. PQ = SQ × RQ, metrica pe clase față de etalon.</li>
-<li>OpenStreetMap contributors, <em>OpenStreetMap</em>, <a href="https://www.openstreetmap.org">https://www.openstreetmap.org</a>, ODbL. Amprentele clădirilor ca indiciu de clasă și martor pentru rotirea foii; axele străzilor pentru fețele stradă (T20).</li>
+<li>OpenStreetMap contributors, <em>OpenStreetMap</em>, <a href="https://www.openstreetmap.org">https://www.openstreetmap.org</a>, ODbL. Amprentele clădirilor ca indiciu de clasă și martor pentru rotirea foii; axele străzilor pentru fețele stradă (T20); spațiile verzi în trei categorii (T21).</li>
 <li>Overture Maps Foundation, <em>Overture Maps data</em> (clădiri, transport), <a href="https://overturemaps.org">https://overturemaps.org</a>, ODbL / CDLA-Permissive-2.0. Sursă externă opțională.</li>
 <li>RapidOCR, <a href="https://github.com/RapidAI/RapidOCR">https://github.com/RapidAI/RapidOCR</a>. Recunoașterea codurilor (ONNX, pe procesor).</li>
 </ul>
@@ -927,6 +1024,9 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <h2 id="ro-jurnalul-versiunilor-changelog">Jurnalul versiunilor (changelog)<a class="anchor" href="#ro-jurnalul-versiunilor-changelog" title="Permanent link">¶</a></h2>
 <p>Din <code>metadata.txt</code> al pluginului, cea mai nouă versiune prima (în engleză).</p>
 <ul class="changelog">
+<li><span class="version">0.3.26</span><span class="when">2026-11-05</span> — Join faces (Vector tab, Edit box): press inside a face, drag onto a neighbour of the same class and release - the two become one (codes of both, buildings counted together, review state edited); green while they can be joined, red with the reason in the box at the cursor when not; gaps up to 0.3 m closed; Ctrl+Z on the map or Undo join puts them back (last 50); every join in the journal.</li>
+<li><span class="version">0.3.25</span><span class="when">2026-11-05</span> — Green spaces in three categories (Engine T21): green_alignment (tree rows, grass strips along streets), green_landscaped (parks, gardens, playgrounds), green_unlandscaped (meadow, scrub, wood). New external source OpenStreetMap green spaces (ticked); a face without a code at least half in one category gets that class, a coded parcel keeps its class and gets the category in the attribute &#x27;green&#x27;. Own green sources with a category field. Review: buttons and keys 1 / 2 / 3; each category styled and written as its own DXF layer.</li>
+<li><span class="version">0.3.24</span><span class="when">2026-11-05</span> — The progress of a long step is drawn on the button that started it (blue fill, percent, what it does now in a second line); a click on that button stops it; meanwhile the other buttons wait; on another tab the percent is on the tab of the running button. The tab bar stays in place: every tab page scrolls by itself, and the tabs, the sheet list and the log share the dock through splitters. Engine T20b: OSM centrelines no longer spoil the drawing where they ride on kerbs and sidewalks - street faces are united only across lines the centreline crosses at 45 degrees or more, a band under 3.5 m is never a street by the centreline alone, sidewalk strips are not joined to the carriageway.</li>
 <li><span class="version">0.3.23</span><span class="when">2026-11-05</span> — Dock made easier to use. Steps numbered 1-7 in their real order (Georeference before Assemble), each with its state written on the button (12/40 frames, 2 red seams...) and the next step outlined. Raster tab in three boxes: Steps, View (Show rasters as a toggle, Satellite + OSM, opacity), Corrections (Check sheets, Move sheet, Undo last move, Refine, Check placement) with QGIS icons. One selection bar under the tabs (Select on map, how many selected, clear), and the buttons say how many sheets they take (Extract 3 selected). Questions name their answers on the buttons instead of Yes / No / Cancel; Move sheet and Check placement turns are applied at once and put back by Undo last move (Ctrl+Z on the map, last 20). Move sheet / Select on map: a small box beside the cursor lists the keys - R turns 90 (with a selection it picks it up and turns it), Shift+R back, G, A all, Alt+A none, Esc, Ctrl+Z. Review appears after Extract, with keys (N next, Enter confirm, B P A S class, X reject, Esc). Progress bar and Stop only while a step runs; the log can be made taller; a legend under the sheet list. Engine: Test connection, Start Engine / Stop Engine on their own row; ? opens the manual without freezing QGIS; Rhino sync buttons in a 2 x 2 grid.</li>
 <li><span class="version">0.3.22</span><span class="when">2026-11-05</span> — External sources (⚙ Settings): building footprints and street centrelines chosen per project - OpenStreetMap buildings and streets (ticked), Overture Maps buildings and streets (through the Engine), and your own: WFS, ArcGIS FeatureServer, OGC API Features, an Overpass query, or any file / QGIS data source; Add / Edit / Remove, Import / Export as .json to give to others, Shared downloads the list other users sent in. Every answer cached per sheet in the project. Streets (Engine T20): a face the centreline runs through, along its length and away from its edges, is a street, and the street faces of one street (same name) are united with their sidewalk strips, one street one face per tile.</li>
 <li><span class="version">0.3.21</span><span class="when">2026-11-04</span> — The dock in tabs: the gear (Settings: project, scans folder with Set..., Engine local / cloud with its own address, Check with what the Engine answered, Start; work mode Online / Offline, offline = OSM footprints from the project cache only and no web layers), Raster, Vector (with the Review box), Rhino sync (only when the Rhino Sync plugin is installed), and a &#x27;?&#x27; button beside the tabs that opens the manual shipped in mapquilt/help (generated from 06-plugin/help with build_help.py: sections, literature, changelog; also published with GitHub Pages).</li>
