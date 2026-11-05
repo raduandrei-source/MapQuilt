@@ -1,0 +1,5 @@
+{
+  "about": "External sources shared by MapQuilt users (QGIS plugin, Settings > External sources > Shared). Each entry is a source definition as written by Export...; send yours as an issue with the .json file.",
+  "format": "https://raduandrei-source.github.io/MapQuilt/#en-external-sources",
+  "sources": []
+}

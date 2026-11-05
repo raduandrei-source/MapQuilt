@@ -72,7 +72,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
   <div>
     <h1>MapQuilt</h1>
     <div class="sub">Automatic raster assembly, georeferencing and vectorisation of scanned cadastral maps in QGIS</div>
-    <div class="ver">version 0.3.21 · manual generated on 2026-11-04 from <code>06-plugin/help/mapquilt/en</code> · <a href="https://raduandrei-source.github.io/MapQuilt/">online version</a></div>
+    <div class="ver">version 0.3.23 · manual generated on 2026-11-05 from <code>06-plugin/help/mapquilt/en</code> · <a href="https://raduandrei-source.github.io/MapQuilt/">online version</a></div>
   </div>
 </header>
 <h2 id="en-what-mapquilt-is">What MapQuilt is<a class="anchor" href="#en-what-mapquilt-is" title="Permanent link">¶</a></h2>
@@ -117,8 +117,8 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <ol>
 <li><strong>Import</strong> — the folder of scans (or of already traced DXFs); the sheets get their nomenclature and neighbours from the file name.</li>
 <li><strong>Rectify</strong> — the sheet frame (four corners), proposed automatically, confirmed by you; the learned pattern is applied to the others.</li>
-<li><strong>Assemble</strong> — the sheets placed on the map by nomenclature; the seams measured (how well the lines on one sheet continue on the next).</li>
 <li><strong>Georeference</strong> — the pixel → Stereo 70 chain from the frame corners and the trapezoid corners; VRTs for display.</li>
+<li><strong>Assemble</strong> — the sheets on the map; the seams measured (how well the lines on one sheet continue on the next).</li>
 <li><strong>Extract</strong> — vectorization of each sheet through the Engine, in 1600 px tiles, with OSM footprints as a class hint; faces, edges and labels in <code>work.gpkg</code>.</li>
 <li><strong>Review</strong> and <strong>Stitch</strong> — the uncertain faces, one by one; joining the faces cut by the sheet edge.</li>
 <li><strong>Export DXF</strong> — one layer per class, plus the quality report.</li>
@@ -141,7 +141,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <ol>
 <li>In <code>07-engine</code> create a Python environment and install the dependencies (or use <code>.venv-test</code> from the repository).</li>
 <li>Start it with <code>run_engine.bat</code> or with <code>python -m mapquilt_engine --port 8765 --workers auto</code>. <code>--workers auto</code> starts one OCR process per core (at most 4): extracting a 1:1000 sheet takes ≈ 2.5 minutes instead of 12.</li>
-<li>In the dock, the <strong>⚙</strong> tab: the address <code>http://127.0.0.1:8765</code>, then <strong>Check</strong>. The dot turns green and the line below it gives the version, the available engines and how many OCR processes it has. <strong>Start</strong> launches the Engine in its own console (it asks for the <code>07-engine</code> folder only once).</li>
+<li>In the dock, the <strong>⚙</strong> tab: the address <code>http://127.0.0.1:8765</code>, then <strong>Test connection</strong>. The dot turns green and the line below it gives the version, the available engines and how many OCR processes it has. <strong>Start Engine</strong> launches the Engine in its own console (it asks for the <code>07-engine</code> folder only once).</li>
 </ol>
 <p>The Engine can also run on another computer of yours: the <strong>Cloud</strong> mode in ⚙ keeps its address separately. The cadastral data leave the institution only if you decide so.</p>
 <h3 id="en-rhino-sync-optional">Rhino Sync (optional)<a class="anchor" href="#en-rhino-sync-optional" title="Permanent link">¶</a></h3>
@@ -158,28 +158,76 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 </ul>
 <h3 id="en-engine">Engine<a class="anchor" href="#en-engine" title="Permanent link">¶</a></h3>
 <ul>
-<li><strong>Local / Cloud</strong> — where the Engine runs. Local: on this computer, default address <code>http://127.0.0.1:8765</code>; <strong>Start</strong> launches it in a console (and Stop closes it). Cloud: the same application on a server of yours, at an <code>https://…</code> address; Start does nothing. Each mode keeps its own address; the project remembers the chosen mode.</li>
-<li><strong>Check</strong> tries <code>/v1/health</code> and shows: the version, the engines (<code>staged</code>, <code>classic</code>…), the OCR processes and how many tiles are sent at once. Red means nothing answers at that address: the Engine is not running, or it is running on another port.</li>
+<li><strong>Local / Cloud</strong> — where the Engine runs. Local: on this computer, default address <code>http://127.0.0.1:8765</code>; <strong>Start Engine</strong> launches it in a console (and <strong>Stop Engine</strong> closes it). Cloud: the same application on a server of yours, at an <code>https://…</code> address; Start Engine is greyed out (a cloud Engine is started on its server). Each mode keeps its own address; the project remembers the chosen mode.</li>
+<li><strong>Test connection</strong> tries <code>/v1/health</code> and shows: the version, the engines (<code>staged</code>, <code>classic</code>…), the OCR processes and how many tiles are sent at once. Red means nothing answers at that address: the Engine is not running, or it is running on another port.</li>
 <li>The steps that need the Engine: Assemble (the seams), Extract, Refine. Import, Rectify, Georeference, Move sheet, Check placement, Stitch and Export work without it.</li>
 </ul>
 <h3 id="en-work-online-offline">Work: Online / Offline<a class="anchor" href="#en-work-online-offline" title="Permanent link">¶</a></h3>
 <ul>
-<li><strong>Online</strong> — Extract downloads the building footprints from OpenStreetMap (Overpass) once per sheet and keeps them in the project's <code>cache/osm_buildings/</code>; <strong>Satellite + OSM</strong> adds the Esri World Imagery and OpenStreetMap web layers, for checking.</li>
-<li><strong>Offline</strong> — nothing is downloaded: footprints come only from the cache; a sheet with no cached response is extracted without the external hint, and Satellite + OSM politely declines. The Engine is not affected (it is local anyway).</li>
+<li><strong>Online</strong> — Extract downloads the ticked external sources (by default the OpenStreetMap buildings and streets) once per sheet and keeps them in the project's <code>cache/</code>; <strong>Satellite + OSM</strong> adds the Esri World Imagery and OpenStreetMap web layers, for checking.</li>
+<li><strong>Offline</strong> — nothing is downloaded: sources come only from the cache (local files are still read); a sheet with no cached response is extracted without the external hint, and Satellite + OSM politely declines. The Engine is not affected (it is local anyway).</li>
 </ul>
-<p>If Overpass does not answer during a run, only the first sheet waits; the others use the cache, so you do not lose three minutes per sheet.</p>
+<p>If a source does not answer during a run, only the first sheet waits; the others use its cache, so you do not lose three minutes per sheet.</p>
+<h3 id="en-external-sources">External sources<a class="anchor" href="#en-external-sources" title="Permanent link">¶</a></h3>
+<p>What Extract (and Check placement) asks the outside world for, sheet by sheet. Ticked sources are used by the open project; the choice is saved in the project.</p>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>OpenStreetMap buildings</strong> (ticked)</td>
+<td>buildings</td>
+<td>footprints traced by people; class hint (building vs parcel), one block one face (T19), Check placement</td>
+</tr>
+<tr>
+<td><strong>OpenStreetMap streets</strong> (ticked)</td>
+<td>streets</td>
+<td>street centrelines with their names; a face the centreline runs through is a street, and the faces of one street are united (T20)</td>
+</tr>
+<tr>
+<td>Overture Maps buildings</td>
+<td>buildings</td>
+<td>OSM plus Microsoft's machine-learning footprints where OSM has none (villages, unmapped quarters); downloaded by the Engine, slow (minutes per sheet)</td>
+</tr>
+<tr>
+<td>Overture Maps streets</td>
+<td>streets</td>
+<td>Overture's road segments (mostly OSM), with names; downloaded by the Engine</td>
+</tr>
+</tbody>
+</table>
+<p>Hover over a source for its licence, attribution and notes. Each answer is kept in the project (<code>cache/osm_buildings/</code>, <code>cache/sources/&lt;id&gt;/</code>), once per sheet, so Extract works offline afterwards.</p>
+<p><strong>Add…</strong> opens a form started from a template:</p>
+<ul>
+<li><strong>WFS (GeoJSON output)</strong>, <strong>ArcGIS FeatureServer</strong>, <strong>OGC API Features</strong> — a URL that answers GeoJSON in WGS84; the sheet's box goes in place of <code>{west}</code>, <code>{south}</code>, <code>{east}</code>, <code>{north}</code> (or <code>{bbox}</code> = south,west,north,east).</li>
+<li><strong>Overpass query</strong> — your own OSM query, with <code>{bbox}</code>.</li>
+<li><strong>File or QGIS data source</strong> — a GeoPackage, Shapefile, GeoJSON, or anything QGIS opens through a provider (<code>ogr</code>, <code>WFS</code>, <code>arcgisfeatureserver</code>, <code>oapif</code>…), read by QGIS for each sheet; tick <em>readable without internet</em> for a local file. This is the way for data you downloaded yourself (Copernicus Urban Atlas, a municipal or cadastral export).</li>
+</ul>
+<p>For streets, give the attribute that holds the street name (<em>Street name field</em>): faces are united street by street, by name. <strong>Edit…</strong> changes one of yours (a built-in one is copied as yours), <strong>Remove</strong> deletes one of yours.</p>
+<p><strong>Sharing.</strong> <strong>Export…</strong> writes the selected source (or all of yours) as a small <code>.json</code> file; someone else adds it with <strong>Import…</strong>. To offer a source to every MapQuilt user, open an issue with the file in the <a href="https://github.com/raduandrei-source/MapQuilt/issues">MapQuilt repository</a>; once checked, it goes into the shared list, which <strong>Shared</strong> downloads (shared sources come unticked). Say the licence: only sources whose terms allow it are listed.</p>
 <h3 id="en-the-manual">? — the manual<a class="anchor" href="#en-the-manual" title="Permanent link">¶</a></h3>
 <p>The <strong>?</strong> button next to the tabs opens this manual: the copy shipped with the plugin (<code>mapquilt/help/index.html</code>, works without internet), or, if it is missing, the online version.</p>
 <h2 id="en-the-raster-tab-the-scans">The Raster tab — the scans<a class="anchor" href="#en-the-raster-tab-the-scans" title="Permanent link">¶</a></h2>
-<p>Everything about the sheets as images: registration, frame, placement on the map, placement check.</p>
-<h3 id="en-import">Import<a class="anchor" href="#en-import" title="Permanent link">¶</a></h3>
+<p>Everything about the sheets as images: registration, frame, placement on the map, placement check. The tab has three boxes:</p>
+<ul>
+<li><strong>Steps</strong> — 1 Import, 2 Rectify, 3 Georeference, 4 Assemble. Each button shows its state on the right (3 sheets, 12/40 frames, 40/40 chains, 2 red seams…) and a coloured dot; the step to run next is outlined in blue.</li>
+<li><strong>View</strong> — Show rasters (a toggle), Satellite + OSM, the opacity slider.</li>
+<li><strong>Corrections</strong> — Check sheets, Move sheet with <strong>Undo last move</strong> beside it, Refine, Check placement.</li>
+</ul>
+<p>Questions name their answers on the buttons ("Only the 5 others" / "All 40 again"), never a Yes / No whose meaning you have to read twice.</p>
+<h3 id="en-1-import">1 · Import<a class="anchor" href="#en-1-import" title="Permanent link">¶</a></h3>
 <p>Choose the folder of scans (JPG, TIF, PNG) or of already traced DXFs. For each file the plugin reads the nomenclature from the name, after cleaning it (<code>….tif.jpg</code>, <code>…_</code>, <code>- Copy</code>, <code>(2)</code>, <code>bis</code>, <code>_</code> instead of <code>-</code>); a name that does not match exactly is matched "fuzzily" against the gaps and neighbours of the series, and the probable names are flagged for checking. The N / E / S / W neighbours are computed from the nomenclature.</p>
 <ul>
 <li>Import run again on the same folder: sheets already registered, with the same content, are skipped and keep their frames, chains and extractions; only new sheets are added. A file with the same name but different content (a rescan) replaces the old sheet, which must be redone. Copies of a sheet (<code>- Copy</code>) are not imported.</li>
 <li>Import does not go into subfolders; a subfolder is imported separately.</li>
 <li>A DXF sheet (one per sheet, named after the nomenclature, with the border kept) is drawn once as an image in <code>rendered/</code> and goes through the same steps as a scan; at Extract its lines are taken directly, without the Engine.</li>
 </ul>
-<h3 id="en-rectify-the-sheet-frame">Rectify — the sheet frame<a class="anchor" href="#en-rectify-the-sheet-frame" title="Permanent link">¶</a></h3>
+<h3 id="en-2-rectify-the-sheet-frame">2 · Rectify — the sheet frame<a class="anchor" href="#en-2-rectify-the-sheet-frame" title="Permanent link">¶</a></h3>
 <p>The frame is a <strong>quadrilateral with four independent corners</strong> (a trapezoid, a rotated scan), not a rectangle. The dialog shows the sheet scaled down with the proposed quadrilateral, the four corners at 1:1 scale with a fixed crosshair (drag the image under the crosshair; the mouse wheel = zoom 1/2/4×) and the confidence for each corner. Clicking on the preview moves the nearest corner. The nomenclature can be corrected in the dialog.</p>
 <ul>
 <li><strong>Confirm and next</strong> confirms and moves to the next sheet without a frame; <strong>Skip</strong> skips it; <strong>◀ Previous</strong> goes back to the sheet you left last, with its frame, so you can correct it.</li>
@@ -187,27 +235,27 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <li>Scanner stripes are suppressed before detection (T16); otherwise the right side fell on a stripe.</li>
 <li>A frame confirmed on a line other than the border (a title block, an inner line) shows up after Georeference in the scale report: the two axes differ by 2–9 %. It is fixed here, not by moving the sheet.</li>
 </ul>
-<h3 id="en-assemble-the-sheets-on-the-map-and-the-seams">Assemble — the sheets on the map and the seams<a class="anchor" href="#en-assemble-the-sheets-on-the-map-and-the-seams" title="Permanent link">¶</a></h3>
-<p>Creates the <strong>MapQuilt sheets</strong> layer with the outline of each sheet (through the chain when it is georeferenced, otherwise the nominal trapezoid), coloured by status, with the neighbours and the missing sheets. With the Engine running it measures <strong>every seam</strong>: the segments that touch the frame are extracted from the edge band of the two scans, taken to ground coordinates and matched one to one across the common line. The <strong>MapQuilt seams</strong> layer shows them: green (median ≤ 0.75 m), yellow (≤ 1.5 m), red (worse, or fewer than 5 matched lines).</p>
-<p>A red seam means a wrongly confirmed frame or a wrong nomenclature on one of the two sheets. No geometric adjustment is applied: the residual is the drawing's own accuracy (≈ 0.5–0.8 m on ICPROM).</p>
-<h3 id="en-georeference">Georeference<a class="anchor" href="#en-georeference" title="Permanent link">¶</a></h3>
+<h3 id="en-3-georeference">3 · Georeference<a class="anchor" href="#en-3-georeference" title="Permanent link">¶</a></h3>
 <p>The frame corners (pixels TL, TR, BR, BL) go to the trapezoid corners (NW, NE, SE, SW) from the nomenclature, computed on the Krasovski ellipsoid and transformed into the target CRS: one homography per sheet. VRTs with a GCP grid (no resampling) and VRTs clipped to the trapezoid are written, for display.</p>
 <ul>
-<li>With sheets already placed, it asks whether to place only the others (new sheets, frames confirmed again). Placing again gives the same location: the corrections from Move sheet and Refine are the very data it is computed from.</li>
+<li>With sheets already placed, it offers <strong>Only the N others</strong> (new sheets, frames confirmed again) or <strong>All N again</strong>. Placing again gives the same location: the corrections from Move sheet and Refine are the very data it is computed from.</li>
 <li>The per-sheet scale report (<code>quality.scale_report</code>) gives metres per pixel on each axis.</li>
 </ul>
+<h3 id="en-4-assemble-the-sheets-on-the-map-and-the-seams">4 · Assemble — the sheets on the map and the seams<a class="anchor" href="#en-4-assemble-the-sheets-on-the-map-and-the-seams" title="Permanent link">¶</a></h3>
+<p>After Georeference (the seams are measured on georeferenced sheets). Creates the <strong>MapQuilt sheets</strong> layer with the outline of each sheet (through the chain when it is georeferenced, otherwise the nominal trapezoid), coloured by status, with the neighbours and the missing sheets. With the Engine running it measures <strong>every seam</strong>: the segments that touch the frame are extracted from the edge band of the two scans, taken to ground coordinates and matched one to one across the common line. The <strong>MapQuilt seams</strong> layer shows them: green (median ≤ 0.75 m), yellow (≤ 1.5 m), red (worse, or fewer than 5 matched lines).</p>
+<p>A red seam means a wrongly confirmed frame or a wrong nomenclature on one of the two sheets. No geometric adjustment is applied: the residual is the drawing's own accuracy (≈ 0.5–0.8 m on ICPROM).</p>
 <h3 id="en-show-rasters-and-opacity">Show rasters and opacity<a class="anchor" href="#en-show-rasters-and-opacity" title="Permanent link">¶</a></h3>
-<p>Loads the scans of the sheets with a confirmed frame, clipped to the trapezoid, into the <strong>MapQuilt rasters</strong> group: the proxy at city scale, the full scan when you zoom in. Pressed again, it hides the group. The slider sets the opacity, so you can check the placement over the map or the satellite image.</p>
+<p>Loads the scans of the sheets with a confirmed frame, clipped to the trapezoid, into the <strong>MapQuilt rasters</strong> group: the proxy at city scale, the full scan when you zoom in. It is a toggle: pressed in, the group is shown; out, it is hidden. The slider sets the opacity, so you can check the placement over the map or the satellite image.</p>
 <h3 id="en-satellite-osm">Satellite + OSM<a class="anchor" href="#en-satellite-osm" title="Permanent link">¶</a></h3>
 <p>Esri World Imagery and OpenStreetMap as XYZ layers in a <strong>Reference</strong> group at the bottom of the layer tree. For checking only: between the 1980s plan and the satellite image there are 1–3 m of offset and changed buildings.</p>
 <h3 id="en-check-sheets-the-audit">Check sheets — the audit<a class="anchor" href="#en-check-sheets-the-audit" title="Permanent link">¶</a></h3>
-<p>Compares the scans folder with the project and writes to the log and to <code>audit.txt</code>: files without a sheet, unrecognized names (with the names read or matched), rescans, copies, originals not found, sheets without a frame / chain / extraction, and the <strong>gaps in the grid</strong> (trapezoids that two sheets name as a neighbour and that are missing), with the probable file for each gap. Cells covered by sheets at another scale do not count as gaps. It offers to apply the reliable names.</p>
+<p>Compares the scans folder with the project and writes to the log and to <code>audit.txt</code>: files without a sheet, unrecognized names (with the names read or matched), rescans, copies, originals not found, sheets without a frame / chain / extraction, and the <strong>gaps in the grid</strong> (trapezoids that two sheets name as a neighbour and that are missing), with the probable file for each gap. Cells covered by sheets at another scale do not count as gaps. In the same window it offers <strong>Give the N nomenclatures</strong> for the reliable names.</p>
 <h3 id="en-move-sheet-moving-a-sheet-on-the-map">Move sheet — moving a sheet on the map<a class="anchor" href="#en-move-sheet-moving-a-sheet-on-the-map" title="Permanent link">¶</a></h3>
-<p>For a sheet that its nomenclature put in the wrong place, or that is rotated, like "grab" in Blender:</p>
+<p>For a sheet that its nomenclature put in the wrong place, or that is rotated, like "grab" in Blender. While sheets are selected or in hand, a <strong>small box beside the cursor</strong> lists the keys that act now:</p>
 <table>
 <thead>
 <tr>
-<th>Action</th>
+<th>Key / action</th>
 <th>Effect</th>
 </tr>
 </thead>
@@ -222,47 +270,60 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 </tr>
 <tr>
 <td>second click</td>
-<td>drops it; on a grid cell (tolerance 2 % of the side, ≈ 12 m at 1:1000) the sheet takes the cell's nomenclature and the quarter turn, and is georeferenced again</td>
+<td>drops it; on a grid cell (tolerance 2 % of the side, ≈ 12 m at 1:1000) the sheet takes the cell's nomenclature and the quarter turn, and is georeferenced again at once</td>
 </tr>
 <tr>
-<td><kbd>R</kbd></td>
-<td>rotates the sheet by 90° within its outline; for a block, rotates the whole block around its centre, cell by cell</td>
+<td><kbd>R</kbd> ↻</td>
+<td>turns 90° clockwise; with sheets selected and none in hand, picks them up and turns them; a block turns around its centre, cell by cell</td>
+</tr>
+<tr>
+<td><kbd>Shift</kbd>+<kbd>R</kbd> ↺</td>
+<td>turns back (90° counter-clockwise)</td>
 </tr>
 <tr>
 <td><kbd>Shift</kbd>+click</td>
-<td>adds sheets to the selection (orange); then a click or <kbd>G</kbd> moves them as a block</td>
+<td>adds a sheet to the selection (orange) or takes it out; then a click on one of them or <kbd>G</kbd> moves them as a block</td>
+</tr>
+<tr>
+<td><kbd>A</kbd> · <kbd>Alt</kbd>+<kbd>A</kbd></td>
+<td>selects every placed sheet · none</td>
 </tr>
 <tr>
 <td><kbd>S</kbd></td>
 <td>changes the grid scale for a sheet without a nomenclature (selected first in the list)</td>
 </tr>
 <tr>
+<td><kbd>Ctrl</kbd>+<kbd>Z</kbd></td>
+<td>undoes the last drop (as <strong>Undo last move</strong>)</td>
+</tr>
+<tr>
 <td><kbd>Esc</kbd> / right click</td>
-<td>cancels</td>
+<td>cancels the sheet in hand; again, clears the selection; again, leaves the tool</td>
 </tr>
 </tbody>
 </table>
-<p>A sheet dropped outside the grid keeps the corners you set by hand. The old nomenclature stays in <code>label.moved_from</code>; an extracted sheet must be extracted again, and the dialog says so.</p>
+<p>There is no question at each drop: what the drop did is written in the log, and <strong>Undo last move</strong> (or <kbd>Ctrl</kbd>+<kbd>Z</kbd> on the map) puts the sheets back, with their old nomenclature, turn, seams and extraction state, up to the last 20 moves. A sheet dropped outside the grid keeps the corners you set by hand. The old nomenclature stays in <code>label.moved_from</code>; an extracted sheet must be extracted again, and the log says so.</p>
 <h3 id="en-refine-the-frame-corrected-from-the-seams">Refine — the frame corrected from the seams<a class="anchor" href="#en-refine-the-frame-corrected-from-the-seams" title="Permanent link">¶</a></h3>
-<p>For a sheet in the right cell whose lines do not continue into its neighbours: the seams with each placed neighbour are measured again, and the four frame corners (pixels) are moved until the lines continue; the neighbours and the grid stay in place. First it chooses, on each side, the drawn line on which the frame was confirmed; then it fits the corners with a prior on the old frame and <strong>validates</strong> the fit on lines not used for fitting. A free fit of the four corners reduces the residual by moving a corner by 8 m: that is not a correction but a distortion, and it is refused. It shows the seams before and after and asks before keeping the result; the old frame stays in the project.</p>
-<p>With no sheets selected, it proposes the sheets with red seams, worst first.</p>
+<p>For a sheet in the right cell whose lines do not continue into its neighbours: the seams with each placed neighbour are measured again, and the four frame corners (pixels) are moved until the lines continue; the neighbours and the grid stay in place. First it chooses, on each side, the drawn line on which the frame was confirmed; then it fits the corners with a prior on the old frame and <strong>validates</strong> the fit on lines not used for fitting. A free fit of the four corners reduces the residual by moving a corner by 8 m: that is not a correction but a distortion, and it is refused. It shows the seams before and after and offers <strong>Keep the refined frames</strong> or <strong>Leave as they were</strong>; the old frame stays in the project.</p>
+<p>It works on the selected sheets (the button says how many). With none selected it offers <strong>Refine the N red, worst first</strong> or <strong>Select sheets on the map</strong>.</p>
 <h3 id="en-check-placement-is-the-sheet-right-side-up">Check placement — is the sheet right side up?<a class="anchor" href="#en-check-placement-is-the-sheet-right-side-up" title="Permanent link">¶</a></h3>
 <p>A witness from outside the series: the building outlines from OpenStreetMap, laid over the scan proxy for each of the four possible rotations of the frame in its cell. The score of a rotation is the <strong>lift</strong>: how many of the outline points fall on ink (the darkest 2 % of pixels, a one-pixel band) divided by how many would fall there by chance. On the test sheets, the right rotation has a lift of 1.9–2.5, the others 0.9–1.1.</p>
 <ul>
-<li>Sheets where a rotation other than the stored one clearly wins are listed and, after Yes, turned (exactly like <kbd>R</kbd> in Move sheet) and georeferenced again.</li>
+<li>Sheets where a rotation other than the stored one clearly wins are listed and, after <strong>Turn N sheets</strong>, turned (exactly like <kbd>R</kbd> in Move sheet) and georeferenced again; <strong>Undo last move</strong> puts them back.</li>
 <li>A sheet that no rotation fits is probably in the wrong cell (Move sheet) or in a rebuilt area.</li>
 <li>The check is deliberately coarse: it tells rotations and cells apart, not metres; the fine accuracy stays with the seams and Refine.</li>
 </ul>
 <h2 id="en-the-vector-tab-the-drawing">The Vector tab — the drawing<a class="anchor" href="#en-the-vector-tab-the-drawing" title="Permanent link">¶</a></h2>
 <h3 id="en-extract-all-extract-selected">Extract all / Extract selected<a class="anchor" href="#en-extract-all-extract-selected" title="Permanent link">¶</a></h3>
-<p><strong>Extract all</strong> vectorizes all sheets; with sheets already extracted it asks whether to extract only the others. <strong>Extract selected</strong> extracts, again, only the selected sheets (in the sheet list with <kbd>Shift</kbd> / <kbd>Ctrl</kbd>+click, on the map with <strong>Select sheets</strong>, the trapezoids selected in the <em>MapQuilt sheets</em> layer, or the <code>sheet …</code> rasters selected in Layers). With no selection, Extract selected starts Select sheets by itself.</p>
+<p><strong>5 · Extract all</strong> vectorizes all sheets; with sheets already extracted it offers <strong>Extract the N others</strong> (or <strong>Resume with the N others</strong> after a Stop) and <strong>All N again</strong>. <strong>Extract selected</strong> extracts, again, only the selected sheets (in the sheet list with <kbd>Shift</kbd> / <kbd>Ctrl</kbd>+click, on the map with <strong>Select on map</strong>, the trapezoids selected in the <em>MapQuilt sheets</em> layer, or the <code>sheet …</code> rasters selected in Layers). Its label says how many sheets it will take (Extract 3 selected). With no selection, it switches Select on map on by itself.</p>
 <p>For each sheet: the scan is read through GDAL at its original resolution, the OSM footprints for the sheet's extent are taken from the cache (or downloaded once), the sheet is cut into 1600 px tiles with a 160 px overlap, each tile goes to the Engine (<code>staged</code>), the results are merged per sheet (complete faces only once, the tile core decides), and everything is written to <code>work.gpkg</code>: the <code>faces</code>, <code>edges</code>, <code>labels</code> layers in the target CRS, styled by class in the <strong>MapQuilt</strong> group.</p>
 <p>The classes: <code>building</code>, <code>annex</code> (sheds, garages, bodies marked with an X), <code>parcel</code>, <code>street</code>, <code>other</code> (the tile edge). Each face carries <code>why</code> (why it got its class: label, indicator, footprint, island, symbol, shape, line width), <code>confidence</code>, <code>review_score</code>, <code>needs_review</code>, <code>codes</code> (the codes read by OCR: C 1900, DP 1901/1 …).</p>
 <p>With the Engine running 4 OCR processes, a 1:1000 sheet takes ≈ 2.5 minutes; two tiles are sent at once. <strong>Stop</strong> stops after the current tile; pressing Extract again resumes with the remaining sheets.</p>
-<h3 id="en-select-sheets">Select sheets<a class="anchor" href="#en-select-sheets" title="Permanent link">¶</a></h3>
-<p>Selects sheets directly on the map (orange outline): click on a sheet, <kbd>Shift</kbd>+click adds or removes, drag a rectangle for several (<kbd>Shift</kbd>+rectangle adds), click on empty map or <kbd>Esc</kbd> clears. The sheet list follows the selection, and Extract selected and Refine use it.</p>
+<h3 id="en-the-selection-bar-one-selection-for-every-tab">The selection bar — one selection for every tab<a class="anchor" href="#en-the-selection-bar-one-selection-for-every-tab" title="Permanent link">¶</a></h3>
+<p>Under the tabs, above the sheet list: <strong>Select on map</strong>, how many sheets are selected, and a button that clears the selection. Select on map selects sheets directly on the map (orange outline): click on a sheet, <kbd>Shift</kbd>+click adds or removes, drag a rectangle for several (<kbd>Shift</kbd>+rectangle adds), <kbd>A</kbd> all, <kbd>Alt</kbd>+<kbd>A</kbd> none, <kbd>Esc</kbd> clears; the small box at the cursor recalls the keys. The list, Move sheet's <kbd>Shift</kbd>+click and QGIS's own selection of <em>MapQuilt sheets</em> all land in the same selection, and the buttons that use it say how many sheets they will take: Extract 3 selected, Refine 3 selected, Check placement · 3 selected.</p>
+<p>Under the list a line explains the codes <code>F G X</code> and the colours; the log under it can be made taller by dragging the bar between them. The progress bar and <strong>Stop</strong> appear only while a step runs.</p>
 <h3 id="en-review-the-uncertain-faces">Review — the uncertain faces<a class="anchor" href="#en-review-the-uncertain-faces" title="Permanent link">¶</a></h3>
-<p>The Review box holds the review queue: <strong>Next</strong> jumps to the most uncertain face (by <code>review_score</code>), over the scan and the satellite image. Then you decide:</p>
+<p>The Review box appears once a sheet is extracted. <strong>Next</strong> (<kbd>N</kbd>) jumps to the most uncertain face (by <code>review_score</code>), over the scan and the satellite image. Then you decide, with the button or its key (the keys work while a face is under review, on the map and in the dock; <kbd>Esc</kbd> stops):</p>
 <table>
 <thead>
 <tr>
@@ -272,23 +333,23 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 </thead>
 <tbody>
 <tr>
-<td><strong>Confirm</strong></td>
+<td><strong>Confirm</strong> <kbd>Enter</kbd></td>
 <td>the face is right as it is (also when it does not match the satellite image: the plan is the historical truth)</td>
 </tr>
 <tr>
-<td><strong>Building / Parcel / Annex / Street</strong></td>
+<td><strong>Building</strong> <kbd>B</kbd> / <strong>Parcel</strong> <kbd>P</kbd> / <strong>Annex</strong> <kbd>A</kbd> / <strong>Street</strong> <kbd>S</kbd></td>
 <td>the shape is right, the class was wrong; the plugin changes it and marks the face as confirmed</td>
 </tr>
 <tr>
-<td><strong>Reject</strong></td>
+<td><strong>Reject</strong> <kbd>X</kbd></td>
 <td>a vectorization error (a false island, an invented boundary); the face is removed from the result</td>
 </tr>
 </tbody>
 </table>
 <p>The decision is written to <code>review_state</code> and goes into the export. The plugin does not correct a mismatch with the satellite image by itself, because it cannot know whether it is a vectorization error or a change over time; it only puts the cases in front of you, the most uncertain first. A wrong shape (a missing or extra boundary) is corrected on the edges, with the QGIS tools, and the faces are recomputed.</p>
-<h3 id="en-stitch-joining-across-the-seams">Stitch — joining across the seams<a class="anchor" href="#en-stitch-joining-across-the-seams" title="Permanent link">¶</a></h3>
+<h3 id="en-6-stitch-joining-across-the-seams">6 · Stitch — joining across the seams<a class="anchor" href="#en-6-stitch-joining-across-the-seams" title="Permanent link">¶</a></h3>
 <p>For each pair of neighbouring sheets, the faces that touch the seam band (± the tolerance, by default 1.5 m = the 90th percentile of the measured noise), of the same class and with overlapping intervals along the common line, are joined; the edges marked "seam" are deleted and the faces are re-polygonized. Nothing is moved, nothing is warped. On DXF sheets the line ends are joined too. Faces already joined are not matched a second time, so Stitch can be run again after a new Import.</p>
-<h3 id="en-export-dxf">Export DXF<a class="anchor" href="#en-export-dxf" title="Permanent link">¶</a></h3>
+<h3 id="en-7-export-dxf">7 · Export DXF<a class="anchor" href="#en-7-export-dxf" title="Permanent link">¶</a></h3>
 <p>Writes the DXF with one layer per class (<code>building</code>, <code>parcel</code>, <code>street</code>, <code>annex</code>, <code>other</code>; on DXF sheets, also the lines), in the target CRS, plus a JSON report (the counts, the reviewed faces, the seams). The layers are first copied into memory, so that the GeoPackage in WAL mode does not produce an empty DXF.</p>
 <p>Simplification and orthogonalization of the outlines (the Engine's <code>regularize</code> parameter: <code>none</code>, <code>simplify</code>, <code>orthogonal</code>) are done on the shared edges, with the junctions fixed, so that neighbours stay attached; for "hand-drawn" style drawings the recommendation is <code>orthogonal</code> (23 → 11 vertices per building at the same quality).</p>
 <h2 id="en-the-journal-the-status-bar-stop">The journal, the status bar, Stop<a class="anchor" href="#en-the-journal-the-status-bar-stop" title="Permanent link">¶</a></h2>
@@ -300,9 +361,9 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <p>Each row: <code>F G X</code> (frame, georeference, extraction), the sheet id, the N E S W neighbours. Green = nomenclature read, red = no nomenclature. The log below the list repeats the messages from QGIS's <em>Log Messages › MapQuilt</em>.</p>
 <h2 id="en-workflows">Workflows<a class="anchor" href="#en-workflows" title="Permanent link">¶</a></h2>
 <h3 id="en-a-sheet-found-later">A sheet found later<a class="anchor" href="#en-a-sheet-found-later" title="Permanent link">¶</a></h3>
-<p>Put the file in the same folder as the scans and press <strong>Import</strong> on it again: the old sheets are skipped, only the new one is added. Then <strong>Rectify</strong> (the dialog opens on the first sheet without a frame, i.e. the new one; "Auto: remaining sheets" applies the learned pattern to it), <strong>Georeference</strong> (only the new sheets), <strong>Assemble</strong>, <strong>Extract</strong> (it asks: only the sheets not yet extracted), <strong>Stitch</strong>, <strong>Export</strong>. A subfolder works too, but Import must be run on it, and Check sheets counts only the main folder.</p>
+<p>Put the file in the same folder as the scans and press <strong>Import</strong> on it again: the old sheets are skipped, only the new one is added. Then <strong>Rectify</strong> (the dialog opens on the first sheet without a frame, i.e. the new one; "Auto: remaining sheets" applies the learned pattern to it), <strong>Georeference</strong> (only the new sheets), <strong>Assemble</strong>, <strong>Extract</strong> (the button <strong>Extract the N others</strong>: only the sheets not yet extracted), <strong>Stitch</strong>, <strong>Export</strong>. A subfolder works too, but Import must be run on it, and Check sheets counts only the main folder.</p>
 <h3 id="en-a-sheet-in-the-wrong-cell-or-rotated">A sheet in the wrong cell, or rotated<a class="anchor" href="#en-a-sheet-in-the-wrong-cell-or-rotated" title="Permanent link">¶</a></h3>
-<p>Signs: on the map the sheet sits over another one or in a gap, its seams are red, Check placement says another rotation fits. Rotation: <strong>Check placement</strong> turns it after Yes. Wrong cell: <strong>Move sheet</strong>, drag the sheet onto its cell; it takes the cell's nomenclature. Then Extract again on it, if it had been extracted.</p>
+<p>Signs: on the map the sheet sits over another one or in a gap, its seams are red, Check placement says another rotation fits. Rotation: <strong>Check placement</strong> turns it after <strong>Turn N sheets</strong>. Wrong cell: <strong>Move sheet</strong>, drag the sheet onto its cell; it takes the cell's nomenclature. Then Extract again on it, if it had been extracted.</p>
 <h3 id="en-a-frame-confirmed-on-the-wrong-line">A frame confirmed on the wrong line<a class="anchor" href="#en-a-frame-confirmed-on-the-wrong-line" title="Permanent link">¶</a></h3>
 <p>Signs: the scale report shows a 2–9 % difference between the axes, the seams are yellow or red on all sides. Hundreds of pixels off: <strong>Rectify</strong> again on the sheet (◀ Previous gets to it). A few pixels: <strong>Refine</strong>.</p>
 <h3 id="en-sheets-without-a-nomenclature">Sheets without a nomenclature<a class="anchor" href="#en-sheets-without-a-nomenclature" title="Permanent link">¶</a></h3>
@@ -357,7 +418,8 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <p><strong>The seams of one sheet are red.</strong> The frame is on the wrong line (Rectify / Refine), the scan is rotated (Check placement) or the nomenclature is wrong (Move sheet). A single red seam between two good sheets can also be an old sheet scanned from a different original.</p>
 <p><strong>Apartment blocks appear as parcels (blue) or cut into pieces.</strong> The plan draws the block with a double line and one code per stairwell, while OSM knows it as a single polygon. Since the Engine version with T19, building faces from the same OSM footprint are merged, and the 1500 m² cap of the footprint rule no longer exists; restart the Engine so it picks up the new code, and extract the sheet again.</p>
 <p><strong>"original not found".</strong> The scans have moved: ⚙ › Scans folder › Set…. Check sheets tells you which sheets cannot be found.</p>
-<p><strong>Overpass does not answer, Extract waits.</strong> Only the first sheet in the run waits; the others use the cache. Set Work: Offline so that it does not wait at all.</p>
+<p><strong>A street comes out in several pieces.</strong> Since the Engine version with T20, the faces a street's centreline runs through are united street by street. Check that <em>OpenStreetMap streets</em> is ticked in ⚙ › External sources, restart the Engine, and extract the sheet again. A street missing from OSM, or a street that did not exist when the plan was drawn, stays as the plan has it.</p>
+<p><strong>Overpass does not answer, Extract waits.</strong> Only the first sheet in the run waits; the others use the cache. Set Work: Offline so that it does not wait at all. Overpass sometimes answers 'at capacity' for a few minutes; Extract the sheet again later.</p>
 <p><strong>The DXF comes out empty.</strong> Versions before 0.3.14 exported directly from the GeoPackage in WAL mode; now the layers are copied into memory. If it persists, close the <code>work.gpkg</code> layers in other applications.</p>
 <p><strong>The Rectify dialog confirmed a wrong frame and I moved on.</strong> ◀ Previous goes back to the sheet you left last, with its frame; correct it and confirm again (the SEMI-AUTO pattern is relearned from it).</p>
 <p><strong>Where are the data?</strong> In the <code>.mapquilt</code> folder: <code>project.json</code> (project, journal, roots), <code>sheets/&lt;id&gt;.json</code> (source, frame, chain, neighbours, seams, quality, review), <code>proxies/</code>, <code>rendered/</code> (rendered DXFs), <code>cache/osm_buildings/</code>, <code>matches/</code> (the seams), <code>work.gpkg</code>, <code>audit.txt</code>. Nothing is written next to the scans except the VRTs.</p>
@@ -368,7 +430,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <li><strong>Annotations</strong> — texts and indicator circles are detected and masked; the lines they interrupt are restored ("bridging").</li>
 <li><strong>Line width</strong> — the distance to the background on the cleaned ink, before thinning; the Otsu threshold separates thick lines (building outlines) from thin ones (boundaries).</li>
 <li><strong>Skeleton → shared edges</strong> — thinning, pruning of short branches (vectorized: 340 s → 2 s per sheet), snapping of loose ends, pixel segments joined into polylines between junctions, simplified with fixed ends.</li>
-<li><strong>Faces and classes</strong> — polygonization of the edges; each face gets its class from, in order: the label inside (C → building, DS/DP → street, CR/CC/CAT → parcel), the circled indicator, the coverage by the OSM footprint (registered locally on the skeleton), topology (an island in a void is a building), shape (long strips = streets), the outline width; small faces with an X are annexes. 3a (T19): building faces from the same OSM footprint are merged. 3b (T12): simplification / orthogonalization on the graph, with fixed junctions.</li>
+<li><strong>Faces and classes</strong> — polygonization of the edges; each face gets its class from, in order: the label inside (C → building, DS/DP → street, CR/CC/CAT → parcel), the circled indicator, a street centreline running through the face along its length and away from its edges (T20), the coverage by the OSM footprint (registered locally on the skeleton), topology (an island in a void is a building), shape (long strips = streets), the outline width; small faces with an X are annexes. 3a (T19): building faces from the same OSM footprint are merged. 3a′ (T20): the street faces of one street (same name, else same way) that touch are merged, with the narrow street strips beside them. 3b (T12): simplification / orthogonalization on the graph, with fixed junctions.</li>
 <li><strong>Dissolve</strong> — buildings are attached to the host parcel with the longest shared side; uncoded strips are merged into their neighbour.</li>
 </ol>
 <p>Measured on the Țicău tile against the reference drawing made in Rhino: building PQ 0.64 (precision 0.80, recall 0.66, mean IoU 0.89); parcels 0.34; the fraction of shared outline went from 0 to 0.63 with the move to the planar graph (T6b).</p>
@@ -408,7 +470,8 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <h3 id="en-measuring-the-result">Measuring the result<a class="anchor" href="#en-measuring-the-result" title="Permanent link">¶</a></h3>
 <ul>
 <li>Alexander Kirillov, Kaiming He, Ross Girshick, Carsten Rother and Piotr Dollár, "Panoptic Segmentation", in <em>CVPR 2019</em> (IEEE, 2019), 9396–9405, <a href="https://doi.org/10.1109/CVPR.2019.00963">https://doi.org/10.1109/CVPR.2019.00963</a>. PQ = SQ × RQ, the per-class metric against the reference drawing.</li>
-<li>OpenStreetMap contributors, <em>OpenStreetMap</em>, <a href="https://www.openstreetmap.org">https://www.openstreetmap.org</a>, ODbL. Building footprints as a class hint and as a witness for the sheet rotation.</li>
+<li>OpenStreetMap contributors, <em>OpenStreetMap</em>, <a href="https://www.openstreetmap.org">https://www.openstreetmap.org</a>, ODbL. Building footprints as a class hint and as a witness for the sheet rotation; street centrelines for the street faces (T20).</li>
+<li>Overture Maps Foundation, <em>Overture Maps data</em> (buildings, transportation), <a href="https://overturemaps.org">https://overturemaps.org</a>, ODbL / CDLA-Permissive-2.0. Optional external source.</li>
 <li>RapidOCR, <a href="https://github.com/RapidAI/RapidOCR">https://github.com/RapidAI/RapidOCR</a>. Code recognition (ONNX, on the CPU).</li>
 </ul>
 <h3 id="en-tools">Tools<a class="anchor" href="#en-tools" title="Permanent link">¶</a></h3>
@@ -418,6 +481,8 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <h2 id="en-changelog">Changelog<a class="anchor" href="#en-changelog" title="Permanent link">¶</a></h2>
 <p>From the plugin's <code>metadata.txt</code>, newest first.</p>
 <ul class="changelog">
+<li><span class="version">0.3.23</span><span class="when">2026-11-05</span> — Dock made easier to use. Steps numbered 1-7 in their real order (Georeference before Assemble), each with its state written on the button (12/40 frames, 2 red seams...) and the next step outlined. Raster tab in three boxes: Steps, View (Show rasters as a toggle, Satellite + OSM, opacity), Corrections (Check sheets, Move sheet, Undo last move, Refine, Check placement) with QGIS icons. One selection bar under the tabs (Select on map, how many selected, clear), and the buttons say how many sheets they take (Extract 3 selected). Questions name their answers on the buttons instead of Yes / No / Cancel; Move sheet and Check placement turns are applied at once and put back by Undo last move (Ctrl+Z on the map, last 20). Move sheet / Select on map: a small box beside the cursor lists the keys - R turns 90 (with a selection it picks it up and turns it), Shift+R back, G, A all, Alt+A none, Esc, Ctrl+Z. Review appears after Extract, with keys (N next, Enter confirm, B P A S class, X reject, Esc). Progress bar and Stop only while a step runs; the log can be made taller; a legend under the sheet list. Engine: Test connection, Start Engine / Stop Engine on their own row; ? opens the manual without freezing QGIS; Rhino sync buttons in a 2 x 2 grid.</li>
+<li><span class="version">0.3.22</span><span class="when">2026-11-05</span> — External sources (⚙ Settings): building footprints and street centrelines chosen per project - OpenStreetMap buildings and streets (ticked), Overture Maps buildings and streets (through the Engine), and your own: WFS, ArcGIS FeatureServer, OGC API Features, an Overpass query, or any file / QGIS data source; Add / Edit / Remove, Import / Export as .json to give to others, Shared downloads the list other users sent in. Every answer cached per sheet in the project. Streets (Engine T20): a face the centreline runs through, along its length and away from its edges, is a street, and the street faces of one street (same name) are united with their sidewalk strips, one street one face per tile.</li>
 <li><span class="version">0.3.21</span><span class="when">2026-11-04</span> — The dock in tabs: the gear (Settings: project, scans folder with Set..., Engine local / cloud with its own address, Check with what the Engine answered, Start; work mode Online / Offline, offline = OSM footprints from the project cache only and no web layers), Raster, Vector (with the Review box), Rhino sync (only when the Rhino Sync plugin is installed), and a &#x27;?&#x27; button beside the tabs that opens the manual shipped in mapquilt/help (generated from 06-plugin/help with build_help.py: sections, literature, changelog; also published with GitHub Pages).</li>
 <li><span class="version">0.3.20</span><span class="when">2026-11-04</span> — Check placement (Raster column): is each scan the right way up in its cell? The OSM building outlines are laid over the scan&#x27;s proxy for the four quarter turns; the turn that puts them on ink wins (lift against chance). Sheets where another turn clearly wins are listed and, after Yes, turned (label quarters, as Move sheet + R) and georeferenced again; a sheet no turn fits is reported as probably in the wrong cell. Selected sheets, or all placed sheets; journal step &#x27;placement&#x27;.</li>
 <li><span class="version">0.3.19</span><span class="when">2026-11-04</span> — Refine / Extract selected with nothing selected switch Select sheets on and say to click the sheets on the map, then press the button again.</li>
@@ -452,7 +517,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
   <div>
     <h1>MapQuilt</h1>
     <div class="sub">Asamblare raster, georeferențiere și vectorizare automată a planurilor cadastrale scanate, în QGIS</div>
-    <div class="ver">versiunea 0.3.21 · manual generat la 2026-11-04 din <code>06-plugin/help/mapquilt/ro</code> · <a href="https://raduandrei-source.github.io/MapQuilt/">varianta online</a></div>
+    <div class="ver">versiunea 0.3.23 · manual generat la 2026-11-05 din <code>06-plugin/help/mapquilt/ro</code> · <a href="https://raduandrei-source.github.io/MapQuilt/">varianta online</a></div>
   </div>
 </header>
 <h2 id="ro-ce-este-mapquilt">Ce este MapQuilt<a class="anchor" href="#ro-ce-este-mapquilt" title="Permanent link">¶</a></h2>
@@ -497,13 +562,13 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <ol>
 <li><strong>Import</strong> — folderul cu scanări (sau cu DXF-uri deja trasate); foile primesc nomenclatura și vecinii din numele fișierului.</li>
 <li><strong>Rectify</strong> — cadrul foii (patru colțuri), propus automat, confirmat de dvs.; tiparul învățat se aplică pe celelalte.</li>
-<li><strong>Assemble</strong> — foile așezate pe hartă după nomenclatură; cusăturile măsurate (cât de bine continuă liniile de pe o foaie pe cealaltă).</li>
 <li><strong>Georeference</strong> — lanțul pixel → Stereo 70 din colțurile cadrului și colțurile trapezului; VRT-uri pentru vizualizare.</li>
+<li><strong>Assemble</strong> — foile pe hartă; cusăturile măsurate (cât de bine continuă liniile de pe o foaie pe cealaltă).</li>
 <li><strong>Extract</strong> — vectorizarea fiecărei foi prin Engine, pe dale de 1600 px, cu amprentele OSM ca indiciu de clasă; fețe, muchii și etichete în <code>work.gpkg</code>.</li>
 <li><strong>Review</strong> și <strong>Stitch</strong> — fețele nesigure, una câte una; unirea fețelor tăiate de linia foii.</li>
 <li><strong>Export DXF</strong> — câte un strat pe clasă, plus raportul de calitate.</li>
 </ol>
-<p>Fiecare pas are un punct de stare (gri / albastru / verde / portocaliu / roșu) și se poate relua; proiectul își ține jurnalul în <code>project.json</code>.</p>
+<p>Fiecare pas are numărul lui, un punct de stare (gri / albastru / verde / portocaliu / roșu) și starea scrisă pe buton; pasul următor e conturat cu albastru și orice pas se poate relua; proiectul își ține jurnalul în <code>project.json</code>.</p>
 <h3 id="ro-două-idei-de-ținut-minte">Două idei de ținut minte<a class="anchor" href="#ro-două-idei-de-ținut-minte" title="Permanent link">¶</a></h3>
 <p><strong>Nomenclatura este georeferențierea.</strong> Numele trapezului spune exact ce celulă din caroiajul oficial e desenată pe foaie, iar colțurile celulei au coordonate cunoscute. Deci, odată confirmat cadrul, foaia e pe hartă fără niciun punct de control. O foaie iese greșit doar dacă numele e greșit (celula greșită), scanarea e rotită sau cadrul a fost confirmat pe altă linie; pentru fiecare caz există o unealtă: Move sheet, Check placement, Rectify / Refine.</p>
 <p><strong>Stratul de referință este cel al muchiilor.</strong> Parcelele și clădirile nu sunt poligoane desenate separat, ci regiunile închise de muchii; două parcele vecine împart exact aceeași limită, fără goluri și suprapuneri, prin construcție. De aceea unirea peste cusătură e doar ștergerea unei muchii și recalcularea fețelor, iar simplificarea contururilor nu desparte vecinii.</p>
@@ -521,7 +586,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <ol>
 <li>În <code>07-engine</code> creați un mediu Python și instalați dependențele (sau folosiți <code>.venv-test</code> din depozit).</li>
 <li>Porniți-l cu <code>run_engine.bat</code> sau cu <code>python -m mapquilt_engine --port 8765 --workers auto</code>. <code>--workers auto</code> pornește câte un proces OCR pe nucleu (cel mult 4): extragerea unei foi 1:1000 durează ≈ 2,5 minute în loc de 12.</li>
-<li>În dock, tabul <strong>⚙</strong>: adresa <code>http://127.0.0.1:8765</code>, apoi <strong>Check</strong>. Punctul devine verde și rândul de sub el spune versiunea, motoarele disponibile și câte procese OCR are. <strong>Start</strong> pornește Engine-ul într-o consolă proprie (cere o singură dată folderul <code>07-engine</code>).</li>
+<li>În dock, tabul <strong>⚙</strong>: adresa <code>http://127.0.0.1:8765</code>, apoi <strong>Test connection</strong>. Punctul devine verde și rândul de sub el spune versiunea, motoarele disponibile și câte procese OCR are. <strong>Start Engine</strong> pornește Engine-ul într-o consolă proprie (cere o singură dată folderul <code>07-engine</code>).</li>
 </ol>
 <p>Engine-ul poate rula și pe alt calculator al dvs.: modul <strong>Cloud</strong> din ⚙ ține adresa lui separat. Datele cadastrale nu părăsesc instituția decât dacă decideți dvs. astfel.</p>
 <h3 id="ro-rhino-sync-opțional">Rhino Sync (opțional)<a class="anchor" href="#ro-rhino-sync-opțional" title="Permanent link">¶</a></h3>
@@ -538,28 +603,77 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 </ul>
 <h3 id="ro-engine">Engine<a class="anchor" href="#ro-engine" title="Permanent link">¶</a></h3>
 <ul>
-<li><strong>Local / Cloud</strong> — unde rulează Engine-ul. Local: pe acest calculator, adresa implicită <code>http://127.0.0.1:8765</code>, <strong>Start</strong> îl pornește într-o consolă (și Stop îl închide). Cloud: aceeași aplicație pe un server al dvs., la adresa <code>https://…</code>; Start nu face nimic. Fiecare mod își ține adresa; proiectul reține modul ales.</li>
-<li><strong>Check</strong> încearcă <code>/v1/health</code> și arată: versiunea, motoarele (<code>staged</code>, <code>classic</code>…), procesele OCR și câte dale se trimit deodată. Roșu înseamnă că nimic nu răspunde la adresa aceea: Engine-ul nu rulează, sau rulează pe alt port.</li>
+<li><strong>Local / Cloud</strong> — unde rulează Engine-ul. Local: pe acest calculator, adresa implicită <code>http://127.0.0.1:8765</code>, <strong>Start Engine</strong> îl pornește într-o consolă (și <strong>Stop Engine</strong> îl închide). Cloud: aceeași aplicație pe un server al dvs., la adresa <code>https://…</code>; Start Engine e gri (un Engine în cloud se pornește pe serverul lui). Fiecare mod își ține adresa; proiectul reține modul ales.</li>
+<li><strong>Test connection</strong> încearcă <code>/v1/health</code> și arată: versiunea, motoarele (<code>staged</code>, <code>classic</code>…), procesele OCR și câte dale se trimit deodată. Roșu înseamnă că nimic nu răspunde la adresa aceea: Engine-ul nu rulează, sau rulează pe alt port.</li>
 <li>Pașii care au nevoie de Engine: Assemble (cusăturile), Extract, Refine. Import, Rectify, Georeference, Move sheet, Check placement, Stitch și Export merg și fără el.</li>
 </ul>
 <h3 id="ro-work-online-offline">Work: Online / Offline<a class="anchor" href="#ro-work-online-offline" title="Permanent link">¶</a></h3>
 <ul>
-<li><strong>Online</strong> — Extract descarcă o singură dată, pe foaie, amprentele clădirilor din OpenStreetMap (Overpass) și le ține în <code>cache/osm_buildings/</code> din proiect; <strong>Satellite + OSM</strong> adaugă straturile web Esri World Imagery și OpenStreetMap, pentru verificare.</li>
-<li><strong>Offline</strong> — nu se descarcă nimic: amprentele vin doar din cache; o foaie fără răspuns în cache e extrasă fără indiciul extern, iar Satellite + OSM refuză politicos. Engine-ul nu e afectat (e oricum local).</li>
+<li><strong>Online</strong> — Extract descarcă o singură dată, pe foaie, sursele externe bifate (implicit clădirile și străzile din OpenStreetMap) și le ține în <code>cache/</code> din proiect; <strong>Satellite + OSM</strong> adaugă straturile web Esri World Imagery și OpenStreetMap, pentru verificare.</li>
+<li><strong>Offline</strong> — nu se descarcă nimic: sursele vin doar din cache (fișierele locale se citesc în continuare); o foaie fără răspuns în cache e extrasă fără indiciul extern, iar Satellite + OSM refuză politicos. Engine-ul nu e afectat (e oricum local).</li>
 </ul>
-<p>Dacă Overpass nu răspunde într-o rulare, doar prima foaie mai așteaptă; celelalte folosesc cache-ul, ca să nu pierdeți câte trei minute pe foaie.</p>
+<p>Dacă o sursă nu răspunde într-o rulare, doar prima foaie mai așteaptă; celelalte folosesc cache-ul ei, ca să nu pierdeți câte trei minute pe foaie.</p>
+<h3 id="ro-external-sources-surse-externe">External sources (surse externe)<a class="anchor" href="#ro-external-sources-surse-externe" title="Permanent link">¶</a></h3>
+<p>Ce cere Extract (și Check placement) din afară, foaie cu foaie. Sursele bifate sunt folosite de proiectul deschis; alegerea se salvează în proiect.</p>
+<table>
+<thead>
+<tr>
+<th>Sursă</th>
+<th>Tip</th>
+<th>Ce face</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>OpenStreetMap buildings</strong> (bifată)</td>
+<td>clădiri</td>
+<td>amprente trasate de oameni; indiciu de clasă (clădire sau parcelă), un bloc o față (T19), Check placement</td>
+</tr>
+<tr>
+<td><strong>OpenStreetMap streets</strong> (bifată)</td>
+<td>străzi</td>
+<td>axele străzilor, cu numele lor; o față străbătută de axă e stradă, iar fețele aceleiași străzi se unesc (T20)</td>
+</tr>
+<tr>
+<td>Overture Maps buildings</td>
+<td>clădiri</td>
+<td>OSM plus amprentele Microsoft detectate automat unde OSM nu are (sate, cartiere necartate); descărcate de Engine, lent (minute pe foaie)</td>
+</tr>
+<tr>
+<td>Overture Maps streets</td>
+<td>străzi</td>
+<td>segmentele de drum Overture (în mare parte din OSM), cu nume; descărcate de Engine</td>
+</tr>
+</tbody>
+</table>
+<p>Cu mouse-ul pe o sursă vedeți licența, atribuirea și notele. Fiecare răspuns se păstrează în proiect (<code>cache/osm_buildings/</code>, <code>cache/sources/&lt;id&gt;/</code>), o dată pe foaie, deci Extract merge apoi și offline.</p>
+<p><strong>Add…</strong> deschide un formular pornit dintr-un șablon:</p>
+<ul>
+<li><strong>WFS (GeoJSON output)</strong>, <strong>ArcGIS FeatureServer</strong>, <strong>OGC API Features</strong> — o adresă care răspunde GeoJSON în WGS84; cutia foii intră în locul lui <code>{west}</code>, <code>{south}</code>, <code>{east}</code>, <code>{north}</code> (sau <code>{bbox}</code> = south,west,north,east).</li>
+<li><strong>Overpass query</strong> — o interogare OSM proprie, cu <code>{bbox}</code>.</li>
+<li><strong>File or QGIS data source</strong> — un GeoPackage, Shapefile, GeoJSON sau orice deschide QGIS printr-un furnizor (<code>ogr</code>, <code>WFS</code>, <code>arcgisfeatureserver</code>, <code>oapif</code>…), citit de QGIS pentru fiecare foaie; bifați <em>readable without internet</em> pentru un fișier local. Așa intră datele descărcate de dvs. (Copernicus Urban Atlas, un export al primăriei sau al cadastrului).</li>
+</ul>
+<p>La străzi, dați atributul care ține numele străzii (<em>Street name field</em>): fețele se unesc stradă cu stradă, după nume. <strong>Edit…</strong> modifică una de-a dvs. (una din plugin se copiază ca a dvs.), <strong>Remove</strong> șterge una de-a dvs.</p>
+<p><strong>Partajare.</strong> <strong>Export…</strong> scrie sursa selectată (sau toate ale dvs.) ca un fișier <code>.json</code> mic; altcineva o adaugă cu <strong>Import…</strong>. Ca să oferiți o sursă tuturor utilizatorilor MapQuilt, deschideți un issue cu fișierul în <a href="https://github.com/raduandrei-source/MapQuilt/issues">depozitul MapQuilt</a>; după verificare, intră în lista comună, pe care <strong>Shared</strong> o descarcă (sursele comune vin nebifate). Spuneți licența: se listează doar sursele ai căror termeni permit asta.</p>
 <h3 id="ro-manualul">? — manualul<a class="anchor" href="#ro-manualul" title="Permanent link">¶</a></h3>
 <p>Butonul <strong>?</strong> de lângă taburi deschide acest manual: copia livrată cu pluginul (<code>mapquilt/help/index.html</code>, merge fără internet), iar dacă lipsește, varianta online.</p>
 <h2 id="ro-tabul-raster-scanările">Tabul Raster — scanările<a class="anchor" href="#ro-tabul-raster-scanările" title="Permanent link">¶</a></h2>
 <p>Tot ce privește foile ca imagini: înregistrare, cadru, așezare pe hartă, verificarea așezării.</p>
-<h3 id="ro-import">Import<a class="anchor" href="#ro-import" title="Permanent link">¶</a></h3>
+<p>Tabul are trei casete:</p>
+<ul>
+<li><strong>Steps</strong> — 1 Import, 2 Rectify, 3 Georeference, 4 Assemble. Fiecare buton își scrie starea în dreapta (3 sheets, 12/40 frames, 40/40 chains, 2 red seams…) și are un punct colorat; pasul de rulat acum e conturat cu albastru.</li>
+<li><strong>View</strong> — Show rasters (buton care rămâne apăsat), Satellite + OSM, cursorul de opacitate.</li>
+<li><strong>Corrections</strong> — Check sheets, Move sheet cu <strong>Undo last move</strong> alături, Refine, Check placement.</li>
+</ul>
+<p>Întrebările își scriu răspunsurile pe butoane („Only the 5 others” / „All 40 again”), nu mai e nicio întrebare Yes / No care trebuie citită de două ori.</p>
+<h3 id="ro-1-import">1 · Import<a class="anchor" href="#ro-1-import" title="Permanent link">¶</a></h3>
 <p>Alegeți folderul scanărilor (JPG, TIF, PNG) sau al DXF-urilor deja trasate. Pentru fiecare fișier pluginul citește nomenclatura din nume, după ce îl curăță (<code>….tif.jpg</code>, <code>…_</code>, <code>- Copy</code>, <code>(2)</code>, <code>bis</code>, <code>_</code> în loc de <code>-</code>); un nume care nu se potrivește exact e potrivit „fuzzy” cu golurile și vecinii seriei, iar numele probabile se marchează pentru verificare. Vecinii N / E / S / V se calculează din nomenclatură.</p>
 <ul>
 <li>Import rulat din nou pe același folder: foile deja înregistrate, cu același conținut, sunt sărite și își păstrează cadrele, lanțurile și extragerile; doar foile noi se adaugă. Un fișier cu același nume dar alt conținut (o rescanare) înlocuiește foaia veche, care trebuie refăcută. Copiile unei foi (<code>- Copy</code>) nu se importă.</li>
 <li>Import nu intră în subfoldere; un subfolder se importă separat.</li>
 <li>O foaie DXF (una pe foaie, numită după nomenclatură, cu chenarul păstrat) e desenată o dată ca imagine în <code>rendered/</code> și trece prin aceiași pași ca o scanare; la Extract se iau liniile ei direct, fără Engine.</li>
 </ul>
-<h3 id="ro-rectify-cadrul-foii">Rectify — cadrul foii<a class="anchor" href="#ro-rectify-cadrul-foii" title="Permanent link">¶</a></h3>
+<h3 id="ro-2-rectify-cadrul-foii">2 · Rectify — cadrul foii<a class="anchor" href="#ro-2-rectify-cadrul-foii" title="Permanent link">¶</a></h3>
 <p>Cadrul este un <strong>patrulater cu patru colțuri independente</strong> (un trapez, o scanare rotită), nu un dreptunghi. Dialogul arată foaia micșorată cu patrulaterul propus, cele patru colțuri la scară 1:1 cu reticul fix (trageți imaginea sub reticul; rotița = zoom 1/2/4×) și încrederea pe fiecare colț. Clic pe previzualizare mută colțul cel mai apropiat. Nomenclatura se poate corecta în dialog.</p>
 <ul>
 <li><strong>Confirm and next</strong> confirmă și trece la foaia următoare fără cadru; <strong>Skip</strong> o sare; <strong>◀ Previous</strong> se întoarce la foaia părăsită ultima dată, cu cadrul ei, ca să-l corectați.</li>
@@ -567,82 +681,95 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <li>Dungile scanerului sunt suprimate înainte de detecție (T16), altfel latura din dreapta cădea pe dungă.</li>
 <li>Un cadru confirmat pe altă linie decât chenarul (un bloc de titlu, o linie interioară) se vede după Georeference în raportul scărilor: cele două axe diferă cu 2–9 %. Se repară aici, nu prin mutare.</li>
 </ul>
-<h3 id="ro-assemble-foile-pe-hartă-și-cusăturile">Assemble — foile pe hartă și cusăturile<a class="anchor" href="#ro-assemble-foile-pe-hartă-și-cusăturile" title="Permanent link">¶</a></h3>
-<p>Creează stratul <strong>MapQuilt sheets</strong> cu conturul fiecărei foi (prin lanț când e georeferențiată, altfel trapezul nominal), colorat după stare, cu vecinii și foile lipsă. Cu Engine-ul pornit măsoară <strong>fiecare cusătură</strong>: segmentele care ating cadrul sunt extrase din banda de margine a celor două scanări, duse în teren și potrivite una la una peste linia comună. Stratul <strong>MapQuilt seams</strong> le arată: verde (mediana ≤ 0,75 m), galben (≤ 1,5 m), roșu (mai rău sau sub 5 linii potrivite).</p>
-<p>O cusătură roșie înseamnă un cadru confirmat greșit sau o nomenclatură greșită pe una din cele două foi. Nu se aplică nicio compensare geometrică: reziduul este precizia proprie a desenului (≈ 0,5–0,8 m pe ICPROM).</p>
-<h3 id="ro-georeference">Georeference<a class="anchor" href="#ro-georeference" title="Permanent link">¶</a></h3>
+<h3 id="ro-3-georeference">3 · Georeference<a class="anchor" href="#ro-3-georeference" title="Permanent link">¶</a></h3>
 <p>Colțurile cadrului (pixeli TL, TR, BR, BL) merg pe colțurile trapezului (NV, NE, SE, SV) din nomenclatură, calculate pe elipsoidul Krasovski și transformate în CRS-ul țintă: o omografie pe foaie. Se scriu VRT-uri cu rețea de GCP-uri (fără reeșantionare) și VRT-uri tăiate la trapez, pentru afișare.</p>
 <ul>
-<li>Cu foi deja așezate, întreabă dacă le așază doar pe celelalte (foi noi, cadre confirmate din nou). Așezarea din nou dă același loc: corecțiile din Move sheet și Refine sunt chiar datele din care se calculează.</li>
+<li>Cu foi deja așezate, oferă <strong>Only the N others</strong> (foi noi, cadre confirmate din nou) sau <strong>All N again</strong>. Așezarea din nou dă același loc: corecțiile din Move sheet și Refine sunt chiar datele din care se calculează.</li>
 <li>Raportul scărilor pe foaie (<code>quality.scale_report</code>) spune metri pe pixel pe fiecare axă.</li>
 </ul>
+<h3 id="ro-4-assemble-foile-pe-hartă-și-cusăturile">4 · Assemble — foile pe hartă și cusăturile<a class="anchor" href="#ro-4-assemble-foile-pe-hartă-și-cusăturile" title="Permanent link">¶</a></h3>
+<p>După Georeference (cusăturile se măsoară pe foi georeferențiate). Creează stratul <strong>MapQuilt sheets</strong> cu conturul fiecărei foi (prin lanț când e georeferențiată, altfel trapezul nominal), colorat după stare, cu vecinii și foile lipsă. Cu Engine-ul pornit măsoară <strong>fiecare cusătură</strong>: segmentele care ating cadrul sunt extrase din banda de margine a celor două scanări, duse în teren și potrivite una la una peste linia comună. Stratul <strong>MapQuilt seams</strong> le arată: verde (mediana ≤ 0,75 m), galben (≤ 1,5 m), roșu (mai rău sau sub 5 linii potrivite).</p>
+<p>O cusătură roșie înseamnă un cadru confirmat greșit sau o nomenclatură greșită pe una din cele două foi. Nu se aplică nicio compensare geometrică: reziduul este precizia proprie a desenului (≈ 0,5–0,8 m pe ICPROM).</p>
 <h3 id="ro-show-rasters-și-opacitatea">Show rasters și opacitatea<a class="anchor" href="#ro-show-rasters-și-opacitatea" title="Permanent link">¶</a></h3>
-<p>Încarcă scanările foilor cu cadru confirmat, tăiate la trapez, în grupul <strong>MapQuilt rasters</strong>: proxy-ul la scara orașului, scanarea întreagă când măriți. Apăsat din nou ascunde grupul. Cursorul setează opacitatea, ca să verificați așezarea peste hartă sau satelit.</p>
+<p>Încarcă scanările foilor cu cadru confirmat, decupate la trapez, în grupul <strong>MapQuilt rasters</strong>: proxy-ul la scara orașului, scanarea întreagă când apropiați. E un buton care rămâne apăsat: apăsat, grupul se vede; ridicat, se ascunde. Cursorul de dedesubt setează opacitatea, ca să verificați așezarea peste hartă sau satelit.</p>
 <h3 id="ro-satellite-osm">Satellite + OSM<a class="anchor" href="#ro-satellite-osm" title="Permanent link">¶</a></h3>
 <p>Esri World Imagery și OpenStreetMap ca straturi XYZ într-un grup <strong>Reference</strong> la baza arborelui. Numai pentru verificare: între planul anilor '80 și satelit sunt 1–3 m de decalaj și clădiri schimbate.</p>
 <h3 id="ro-check-sheets-auditul">Check sheets — auditul<a class="anchor" href="#ro-check-sheets-auditul" title="Permanent link">¶</a></h3>
-<p>Compară folderul scanărilor cu proiectul și scrie în log și în <code>audit.txt</code>: fișiere fără foaie, nume nerecunoscute (cu numele citite sau potrivite), rescanări, copii, originale negăsite, foi fără cadru / lanț / extragere și <strong>golurile caroiajului</strong> (trapeze pe care două foi le numesc drept vecin și care lipsesc), cu fișierul probabil al fiecărui gol. Celulele acoperite de foi la altă scară nu se numără ca goluri. Oferă aplicarea numelor sigure.</p>
+<p>Compară folderul scanărilor cu proiectul și scrie în log și în <code>audit.txt</code>: fișiere fără foaie, nume nerecunoscute (cu numele citite sau potrivite), rescanări, copii, originale negăsite, foi fără cadru / lanț / extragere și <strong>golurile caroiajului</strong> (trapeze pe care două foi le numesc drept vecin și care lipsesc), cu fișierul probabil al fiecărui gol. Celulele acoperite de foi la altă scară nu se numără ca goluri. În aceeași fereastră oferă <strong>Give the N nomenclatures</strong> pentru numele sigure.</p>
 <h3 id="ro-move-sheet-mutarea-pe-hartă">Move sheet — mutarea pe hartă<a class="anchor" href="#ro-move-sheet-mutarea-pe-hartă" title="Permanent link">¶</a></h3>
-<p>Pentru o foaie pusă de nomenclatură în locul greșit sau rotită, ca „grab” în Blender:</p>
+<p>Pentru o foaie pe care nomenclatura a pus-o în alt loc, sau care e rotită, ca „grab” din Blender. Cât timp sunt foi selectate sau o foaie în mână, o <strong>casetă mică lângă cursor</strong> arată tastele care acționează acum:</p>
 <table>
 <thead>
 <tr>
-<th>Acțiune</th>
+<th>Tastă / acțiune</th>
 <th>Efect</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>clic pe foaie</td>
-<td>o ia; scanarea urmează mouse-ul, semitransparentă, cu conturul roșu</td>
+<td>clic pe o foaie</td>
+<td>o ia; scanarea urmează mouse-ul, semi-transparentă, cu contur roșu</td>
 </tr>
 <tr>
 <td>mișcare</td>
-<td>colțul cel mai apropiat se agață (14 px) de colțurile celulelor și ale celorlalte foi; pătrate albastre = ținte, cruce roșie = cea de care se agață</td>
+<td>colțul cel mai apropiat se prinde (14 px) de colțurile celulelor și ale celorlalte foi; pătrate albastre = ținte, crucea roșie = cea de care se prinde</td>
 </tr>
 <tr>
 <td>al doilea clic</td>
-<td>o lasă; pe o celulă a grilei (toleranță 2 % din latură, ≈ 12 m la 1:1000) foaia ia nomenclatura celulei și sfertul de rotire, și e georeferențiată din nou</td>
+<td>o lasă; pe o celulă a caroiajului (toleranță 2 % din latură, ≈ 12 m la 1:1000) foaia ia nomenclatura celulei și sfertul de rotire și se georeferențiază imediat</td>
 </tr>
 <tr>
-<td><kbd>R</kbd></td>
-<td>rotește foaia cu 90° în conturul ei; pentru un bloc, rotește tot blocul în jurul centrului, celulă cu celulă</td>
+<td><kbd>R</kbd> ↻</td>
+<td>rotește 90° în sensul acelor de ceasornic; cu foi selectate și niciuna în mână, le ia și le rotește; un bloc se rotește în jurul centrului, celulă cu celulă</td>
+</tr>
+<tr>
+<td><kbd>Shift</kbd>+<kbd>R</kbd> ↺</td>
+<td>rotește înapoi (90° invers)</td>
 </tr>
 <tr>
 <td><kbd>Shift</kbd>+clic</td>
-<td>adaugă foi la selecție (portocaliu); apoi un clic sau <kbd>G</kbd> le mută ca bloc</td>
+<td>adaugă o foaie la selecție (portocaliu) sau o scoate; apoi un clic pe una dintre ele sau <kbd>G</kbd> le mută ca bloc</td>
+</tr>
+<tr>
+<td><kbd>A</kbd> · <kbd>Alt</kbd>+<kbd>A</kbd></td>
+<td>selectează toate foile așezate · niciuna</td>
 </tr>
 <tr>
 <td><kbd>S</kbd></td>
-<td>schimbă scara grilei pentru o foaie fără nomenclatură (selectată întâi în listă)</td>
+<td>schimbă scara caroiajului pentru o foaie fără nomenclatură (selectată întâi în listă)</td>
+</tr>
+<tr>
+<td><kbd>Ctrl</kbd>+<kbd>Z</kbd></td>
+<td>anulează ultima mutare (ca <strong>Undo last move</strong>)</td>
 </tr>
 <tr>
 <td><kbd>Esc</kbd> / clic dreapta</td>
-<td>renunță</td>
+<td>renunță la foaia din mână; din nou, golește selecția; din nou, iese din unealtă</td>
 </tr>
 </tbody>
 </table>
-<p>O foaie lăsată în afara grilei își păstrează colțurile puse de mână. Vechea nomenclatură rămâne în <code>label.moved_from</code>; o foaie extrasă trebuie extrasă din nou, iar dialogul o spune.</p>
+<p>Nu mai apare nicio întrebare la fiecare mutare: ce a făcut mutarea se scrie în log, iar <strong>Undo last move</strong> (sau <kbd>Ctrl</kbd>+<kbd>Z</kbd> pe hartă) pune foile înapoi, cu nomenclatura, rotirea, cusăturile și starea extragerii de dinainte, până la ultimele 20 de mutări. O foaie lăsată în afara caroiajului își păstrează colțurile puse de mână. Nomenclatura veche rămâne în <code>label.moved_from</code>; o foaie deja extrasă trebuie extrasă din nou, iar log-ul spune asta.</p>
 <h3 id="ro-refine-cadrul-corectat-din-cusături">Refine — cadrul corectat din cusături<a class="anchor" href="#ro-refine-cadrul-corectat-din-cusături" title="Permanent link">¶</a></h3>
-<p>Pentru o foaie în celula bună, ale cărei linii nu continuă în vecini: cusăturile cu fiecare vecin așezat se măsoară din nou, iar cele patru colțuri ale cadrului (pixeli) se mută până când liniile continuă; vecinii și grila rămân pe loc. Întâi alege, pe fiecare latură, linia desenată pe care a fost confirmat cadrul; apoi face o potrivire a colțurilor cu prior pe cadrul vechi și o <strong>validează</strong> pe linii neutilizate la potrivire. O potrivire liberă a celor patru colțuri reduce reziduul mutând un colț cu 8 m: aceea nu e corecție, ci deformare, și e refuzată. Arată cusăturile înainte și după și întreabă înainte de a păstra; cadrul vechi rămâne în proiect.</p>
-<p>Fără foi selectate propune foile cu cusături roșii, cea mai proastă prima.</p>
+<p>Pentru o foaie în celula bună, ale cărei linii nu continuă în vecini: cusăturile cu fiecare vecin așezat se măsoară din nou, iar cele patru colțuri ale cadrului (pixeli) se mută până când liniile continuă; vecinii și grila rămân pe loc. Întâi alege, pe fiecare latură, linia desenată pe care a fost confirmat cadrul; apoi face o potrivire a colțurilor cu prior pe cadrul vechi și o <strong>validează</strong> pe linii neutilizate la potrivire. O potrivire liberă a celor patru colțuri reduce reziduul mutând un colț cu 8 m: aceea nu e corecție, ci deformare, și e refuzată. Arată cusăturile înainte și după și oferă <strong>Keep the refined frames</strong> sau <strong>Leave as they were</strong>; cadrul vechi rămâne în proiect.</p>
+<p>Lucrează pe foile selectate (butonul spune câte). Fără foi selectate oferă <strong>Refine the N red, worst first</strong> sau <strong>Select sheets on the map</strong>.</p>
 <h3 id="ro-check-placement-foaia-stă-cu-susul-în-sus">Check placement — foaia stă cu susul în sus?<a class="anchor" href="#ro-check-placement-foaia-stă-cu-susul-în-sus" title="Permanent link">¶</a></h3>
 <p>Un martor din afara seriei: contururile clădirilor din OpenStreetMap, puse peste proxy-ul scanării pentru fiecare din cele patru rotiri posibile ale cadrului în celulă. Scorul rotirii este <strong>liftul</strong>: cât din punctele conturului cad pe cerneală (cei mai întunecați 2 % din pixeli, bandă de un pixel) împărțit la cât ar cădea din întâmplare. Pe foile de probă, rotirea bună are lift 1,9–2,5, celelalte 0,9–1,1.</p>
 <ul>
-<li>Foile la care câștigă clar altă rotire decât cea stocată sunt listate și, după Da, întoarse (exact ca <kbd>R</kbd> în Move sheet) și georeferențiate din nou.</li>
+<li>Foile la care câștigă clar altă rotire decât cea stocată sunt listate și, după <strong>Turn N sheets</strong>, întoarse (exact ca <kbd>R</kbd> în Move sheet) și georeferențiate din nou; <strong>Undo last move</strong> le pune înapoi.</li>
 <li>O foaie pe care nu o potrivește nicio rotire e probabil în celula greșită (Move sheet) sau într-o zonă reconstruită.</li>
 <li>Verificarea e grosieră cu bună știință: deosebește rotirile și celula, nu metrii; precizia fină rămâne la cusături și Refine.</li>
 </ul>
 <h2 id="ro-tabul-vector-desenul">Tabul Vector — desenul<a class="anchor" href="#ro-tabul-vector-desenul" title="Permanent link">¶</a></h2>
 <h3 id="ro-extract-all-extract-selected">Extract all / Extract selected<a class="anchor" href="#ro-extract-all-extract-selected" title="Permanent link">¶</a></h3>
-<p><strong>Extract all</strong> vectorizează toate foile; cu foi deja extrase întreabă dacă le extrage doar pe celelalte. <strong>Extract selected</strong> extrage, din nou, doar foile selectate (în lista de foi cu <kbd>Shift</kbd> / <kbd>Ctrl</kbd>+clic, pe hartă cu <strong>Select sheets</strong>, trapezele selectate în stratul <em>MapQuilt sheets</em> sau rasterele <code>sheet …</code> selectate în Layers). Fără selecție, Extract selected pornește singur Select sheets.</p>
+<p><strong>5 · Extract all</strong> vectorizează toate foile; cu foi deja extrase oferă <strong>Extract the N others</strong> (sau <strong>Resume with the N others</strong> după un Stop) și <strong>All N again</strong>. <strong>Extract selected</strong> extrage, din nou, doar foile selectate (în lista de foi cu <kbd>Shift</kbd> / <kbd>Ctrl</kbd>+clic, pe hartă cu <strong>Select on map</strong>, trapezele selectate în stratul <em>MapQuilt sheets</em> sau rasterele <code>sheet …</code> selectate în Layers). Eticheta lui spune câte foi ia (Extract 3 selected). Fără selecție, pornește singur Select on map.</p>
 <p>Pentru fiecare foaie: scanarea e citită prin GDAL la rezoluția originală, amprentele OSM ale întinderii foii se iau din cache (sau se descarcă o dată), foaia se taie în dale de 1600 px cu suprapunere de 160 px, fiecare dală merge la Engine (<code>staged</code>), rezultatele se unesc pe foaie (fețele complete o singură dată, nucleul dalei decide), și totul se scrie în <code>work.gpkg</code>: straturile <code>faces</code>, <code>edges</code>, <code>labels</code> în CRS-ul țintă, stilizate pe clase în grupul <strong>MapQuilt</strong>.</p>
 <p>Clasele: <code>building</code>, <code>annex</code> (șoproane, garaje, corpuri cu X), <code>parcel</code>, <code>street</code>, <code>other</code> (marginea dalei). Fiecare față poartă <code>why</code> (de ce a primit clasa: etichetă, indicator, amprentă, insulă, simbol, formă, grosimea liniei), <code>confidence</code>, <code>review_score</code>, <code>needs_review</code>, <code>codes</code> (codurile citite prin OCR: C 1900, DP 1901/1 …).</p>
 <p>Cu Engine-ul cu 4 procese OCR, o foaie 1:1000 durează ≈ 2,5 minute; se trimit două dale deodată. <strong>Stop</strong> oprește după dala curentă; Extract apăsat din nou reia cu foile rămase.</p>
-<h3 id="ro-select-sheets">Select sheets<a class="anchor" href="#ro-select-sheets" title="Permanent link">¶</a></h3>
-<p>Selectează foile direct pe hartă (contur portocaliu): clic pe o foaie, <kbd>Shift</kbd>+clic adaugă sau scoate, dreptunghi tras pentru mai multe (<kbd>Shift</kbd>+dreptunghi adaugă), clic pe harta goală sau <kbd>Esc</kbd> golește. Lista de foi urmează selecția, iar Extract selected și Refine o folosesc.</p>
+<h3 id="ro-bara-de-selecție-o-singură-selecție-pentru-toate-taburile">Bara de selecție — o singură selecție pentru toate taburile<a class="anchor" href="#ro-bara-de-selecție-o-singură-selecție-pentru-toate-taburile" title="Permanent link">¶</a></h3>
+<p>Sub taburi, deasupra listei de foi: <strong>Select on map</strong>, câte foi sunt selectate și un buton care golește selecția. Select on map selectează foile direct pe hartă (contur portocaliu): clic pe o foaie, <kbd>Shift</kbd>+clic adaugă sau scoate, trageți un dreptunghi pentru mai multe (<kbd>Shift</kbd>+dreptunghi adaugă), <kbd>A</kbd> toate, <kbd>Alt</kbd>+<kbd>A</kbd> niciuna, <kbd>Esc</kbd> golește; caseta mică de lângă cursor amintește tastele. Lista, <kbd>Shift</kbd>+clic din Move sheet și selecția QGIS pe <em>MapQuilt sheets</em> ajung în aceeași selecție, iar butoanele care o folosesc spun câte foi iau: Extract 3 selected, Refine 3 selected, Check placement · 3 selected.</p>
+<p>Sub listă, un rând explică codurile <code>F G X</code> și culorile; log-ul de dedesubt se mărește trăgând de bara dintre ele. Bara de progres și <strong>Stop</strong> apar doar cât rulează un pas.</p>
 <h3 id="ro-review-fețele-nesigure">Review — fețele nesigure<a class="anchor" href="#ro-review-fețele-nesigure" title="Permanent link">¶</a></h3>
-<p>Caseta Review ține coada de revizuire: <strong>Next</strong> sare la fața cea mai incertă (după <code>review_score</code>), peste scanare și satelit. Apoi decideți:</p>
+<p>Caseta Review apare după ce o foaie e extrasă. <strong>Next</strong> (<kbd>N</kbd>) sare la fața cea mai incertă (după <code>review_score</code>), peste scanare și satelit. Apoi decideți, cu butonul sau cu tasta lui (tastele merg cât timp o față e în revizuire, pe hartă și în dock; <kbd>Esc</kbd> oprește):</p>
 <table>
 <thead>
 <tr>
@@ -652,23 +779,23 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 </thead>
 <tbody>
 <tr>
-<td><strong>Confirm</strong></td>
+<td><strong>Confirm</strong> <kbd>Enter</kbd></td>
 <td>fața e bună așa cum e (și atunci când nu se potrivește cu satelitul: planul e adevărul istoric)</td>
 </tr>
 <tr>
-<td><strong>Building / Parcel / Annex / Street</strong></td>
+<td><strong>Building</strong> <kbd>B</kbd> / <strong>Parcel</strong> <kbd>P</kbd> / <strong>Annex</strong> <kbd>A</kbd> / <strong>Street</strong> <kbd>S</kbd></td>
 <td>forma e bună, clasa era greșită; pluginul o schimbă și marchează fața confirmată</td>
 </tr>
 <tr>
-<td><strong>Reject</strong></td>
+<td><strong>Reject</strong> <kbd>X</kbd></td>
 <td>o eroare de vectorizare (o insulă falsă, o limită inventată); fața iese din rezultat</td>
 </tr>
 </tbody>
 </table>
 <p>Decizia se scrie în <code>review_state</code> și ajunge în export. Pluginul nu corectează singur o nepotrivire cu satelitul, pentru că nu poate ști dacă e eroare de vectorizare sau schimbare în timp; el doar pune cazurile în fața dvs., cele mai nesigure primele. O formă greșită (limită lipsă sau în plus) se corectează pe muchii, cu uneltele QGIS, iar fețele se recalculează.</p>
-<h3 id="ro-stitch-unirea-peste-cusături">Stitch — unirea peste cusături<a class="anchor" href="#ro-stitch-unirea-peste-cusături" title="Permanent link">¶</a></h3>
+<h3 id="ro-6-stitch-unirea-peste-cusături">6 · Stitch — unirea peste cusături<a class="anchor" href="#ro-6-stitch-unirea-peste-cusături" title="Permanent link">¶</a></h3>
 <p>Pentru fiecare pereche de foi vecine, fețele care ating banda cusăturii (± toleranța, implicit 1,5 m = percentila 90 a zgomotului măsurat), de aceeași clasă și cu intervale suprapuse pe linia comună, se unesc; muchiile marcate „cusătură” se șterg și fețele se repoligonizează. Nimic nu se mută, nimic nu se deformează. Pe foile DXF se unesc și capetele liniilor. Fețele deja unite nu se mai potrivesc a doua oară, deci Stitch se poate rula iar după un Import nou.</p>
-<h3 id="ro-export-dxf">Export DXF<a class="anchor" href="#ro-export-dxf" title="Permanent link">¶</a></h3>
+<h3 id="ro-7-export-dxf">7 · Export DXF<a class="anchor" href="#ro-7-export-dxf" title="Permanent link">¶</a></h3>
 <p>Scrie DXF-ul cu câte un strat pe clasă (<code>building</code>, <code>parcel</code>, <code>street</code>, <code>annex</code>, <code>other</code>; pe foile DXF și liniile), în CRS-ul țintă, plus un raport JSON (numărătorile, fețele revizuite, cusăturile). Straturile se copiază întâi în memorie, ca GeoPackage-ul în mod WAL să nu dea un DXF gol.</p>
 <p>Simplificarea și ortogonalizarea contururilor (parametrul <code>regularize</code> al Engine-ului: <code>none</code>, <code>simplify</code>, <code>orthogonal</code>) se fac pe muchiile comune, cu joncțiunile fixe, ca vecinii să rămână lipiți; pentru desene „ca de mână” recomandarea este <code>orthogonal</code> (23 → 11 vârfuri pe clădire la aceeași calitate).</p>
 <h2 id="ro-jurnalul-bara-de-stare-stop">Jurnalul, bara de stare, Stop<a class="anchor" href="#ro-jurnalul-bara-de-stare-stop" title="Permanent link">¶</a></h2>
@@ -680,9 +807,9 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <p>Fiecare rând: <code>F G X</code> (cadru, georeferențiere, extragere), id-ul foii, vecinii N E S V. Verde = nomenclatură citită, roșu = fără nomenclatură. Logul de sub listă repetă mesajele din <em>Log Messages › MapQuilt</em> al QGIS.</p>
 <h2 id="ro-fluxuri-de-lucru">Fluxuri de lucru<a class="anchor" href="#ro-fluxuri-de-lucru" title="Permanent link">¶</a></h2>
 <h3 id="ro-o-planșă-găsită-mai-târziu">O planșă găsită mai târziu<a class="anchor" href="#ro-o-planșă-găsită-mai-târziu" title="Permanent link">¶</a></h3>
-<p>Puneți fișierul în același folder cu scanările și apăsați din nou <strong>Import</strong> pe el: foile vechi sunt sărite, doar cea nouă se adaugă. Apoi <strong>Rectify</strong> (dialogul se deschide pe prima foaie fără cadru, adică pe cea nouă; „Auto: remaining sheets” îi aplică tiparul învățat), <strong>Georeference</strong> (doar foile noi), <strong>Assemble</strong>, <strong>Extract</strong> (întreabă: doar foile neextrase), <strong>Stitch</strong>, <strong>Export</strong>. Un subfolder merge și el, dar Import trebuie rulat pe el, iar Check sheets numără doar folderul principal.</p>
+<p>Puneți fișierul în același folder cu scanările și apăsați din nou <strong>Import</strong> pe el: foile vechi sunt sărite, doar cea nouă se adaugă. Apoi <strong>Rectify</strong> (dialogul se deschide pe prima foaie fără cadru, adică pe cea nouă; „Auto: remaining sheets” îi aplică tiparul învățat), <strong>Georeference</strong> (doar foile noi), <strong>Assemble</strong>, <strong>Extract</strong> (butonul <strong>Extract the N others</strong>: doar foile neextrase), <strong>Stitch</strong>, <strong>Export</strong>. Un subfolder merge și el, dar Import trebuie rulat pe el, iar Check sheets numără doar folderul principal.</p>
 <h3 id="ro-o-foaie-în-celula-greșită-sau-rotită">O foaie în celula greșită sau rotită<a class="anchor" href="#ro-o-foaie-în-celula-greșită-sau-rotită" title="Permanent link">¶</a></h3>
-<p>Semne: pe hartă foaia stă peste alta sau într-un gol, cusăturile ei sunt roșii, Check placement spune că o altă rotire se potrivește. Rotire: <strong>Check placement</strong> o întoarce după Da. Celulă greșită: <strong>Move sheet</strong>, trageți foaia pe celula ei; primește nomenclatura celulei. Apoi Extract din nou pe ea, dacă fusese extrasă.</p>
+<p>Semne: pe hartă foaia stă peste alta sau într-un gol, cusăturile ei sunt roșii, Check placement spune că o altă rotire se potrivește. Rotire: <strong>Check placement</strong> o întoarce după <strong>Turn N sheets</strong>. Celulă greșită: <strong>Move sheet</strong>, trageți foaia pe celula ei; primește nomenclatura celulei. Apoi Extract din nou pe ea, dacă fusese extrasă.</p>
 <h3 id="ro-un-cadru-confirmat-pe-linia-greșită">Un cadru confirmat pe linia greșită<a class="anchor" href="#ro-un-cadru-confirmat-pe-linia-greșită" title="Permanent link">¶</a></h3>
 <p>Semne: raportul scărilor arată 2–9 % diferență între axe, cusăturile sunt galbene sau roșii pe toate laturile. Sute de pixeli: <strong>Rectify</strong> din nou pe foaie (◀ Previous ajunge la ea). Câțiva pixeli: <strong>Refine</strong>.</p>
 <h3 id="ro-foi-fără-nomenclatură">Foi fără nomenclatură<a class="anchor" href="#ro-foi-fără-nomenclatură" title="Permanent link">¶</a></h3>
@@ -737,7 +864,8 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <p><strong>Cusăturile sunt roșii pe o foaie.</strong> Cadrul e pe linia greșită (Rectify / Refine), scanarea e rotită (Check placement) sau nomenclatura e greșită (Move sheet). O singură cusătură roșie între două foi bune poate fi și o foaie veche scanată de pe un original diferit.</p>
 <p><strong>Blocurile apar ca parcele (albastre) sau tăiate în bucăți.</strong> Planul desenează blocul cu linie dublă și un cod pe scară, iar OSM îl știe ca un poligon. Din versiunea Engine cu T19, fețele clădire din aceeași amprentă OSM se unesc, iar plafonul de 1500 m² al regulii amprentei nu mai există; reporniți Engine-ul ca să ia codul nou și extrageți din nou foaia.</p>
 <p><strong>„original not found”.</strong> Scanările s-au mutat: ⚙ › Scans folder › Set…. Check sheets spune care foi nu se regăsesc.</p>
-<p><strong>Overpass nu răspunde, Extract așteaptă.</strong> Doar prima foaie din rulare mai așteaptă; celelalte folosesc cache-ul. Setați Work: Offline ca să nu aștepte deloc.</p>
+<p><strong>O stradă iese în mai multe bucăți.</strong> Din versiunea Engine cu T20, fețele străbătute de axa unei străzi se unesc stradă cu stradă. Verificați că <em>OpenStreetMap streets</em> e bifată în ⚙ › External sources, reporniți Engine-ul și extrageți din nou foaia. O stradă care lipsește din OSM, sau care nu exista când s-a desenat planul, rămâne cum o are planul.</p>
+<p><strong>Overpass nu răspunde, Extract așteaptă.</strong> Doar prima foaie din rulare mai așteaptă; celelalte folosesc cache-ul. Setați Work: Offline ca să nu aștepte deloc. Overpass răspunde uneori „at capacity” câteva minute; extrageți foaia din nou mai târziu.</p>
 <p><strong>DXF-ul iese gol.</strong> Versiunile dinainte de 0.3.14 exportau direct din GeoPackage-ul în mod WAL; acum straturile se copiază în memorie. Dacă persistă, închideți straturile <code>work.gpkg</code> din alte aplicații.</p>
 <p><strong>Dialogul Rectify a confirmat un cadru greșit și am trecut mai departe.</strong> ◀ Previous se întoarce la foaia părăsită ultima dată, cu cadrul ei; corectați și confirmați din nou (tiparul SEMI-AUTO se reînvață de pe ea).</p>
 <p><strong>Unde sunt datele?</strong> În folderul <code>.mapquilt</code>: <code>project.json</code> (proiect, jurnal, roots), <code>sheets/&lt;id&gt;.json</code> (sursă, cadru, lanț, vecini, cusături, calitate, revizuire), <code>proxies/</code>, <code>rendered/</code> (DXF-uri desenate), <code>cache/osm_buildings/</code>, <code>matches/</code> (cusăturile), <code>work.gpkg</code>, <code>audit.txt</code>. Nimic nu se scrie lângă scanări în afară de VRT-uri.</p>
@@ -748,7 +876,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <li><strong>Adnotări</strong> — textele și cercurile-indicator se detectează și se mască; liniile întrerupte de ele se refac („bridging”).</li>
 <li><strong>Grosimea liniei</strong> — distanța până la fundal pe cerneala curățată, înainte de subțiere; pragul Otsu desparte liniile groase (contur de clădire) de cele subțiri (limite).</li>
 <li><strong>Scheletul → muchii comune</strong> — subțiere, tăierea ramurilor scurte (vectorizat: 340 s → 2 s pe foaie), lipirea capetelor libere, segmente de pixeli unite în polilinii între joncțiuni, simplificate cu capetele fixe.</li>
-<li><strong>Fețe și clase</strong> — poligonizarea muchiilor; fiecare față primește clasa după, în ordine: eticheta din interior (C → clădire, DS/DP → stradă, CR/CC/CAT → parcelă), indicatorul în cerc, acoperirea amprentei OSM (înregistrată local pe schelet), topologia (o insulă într-un gol e clădire), forma (benzi lungi = străzi), grosimea conturului; fețele mici cu X sunt anexe. 3a (T19): fețele clădire din aceeași amprentă OSM se unesc. 3b (T12): simplificare / ortogonalizare pe graf, cu joncțiunile fixe.</li>
+<li><strong>Fețe și clase</strong> — poligonizarea muchiilor; fiecare față primește clasa după, în ordine: eticheta din interior (C → clădire, DS/DP → stradă, CR/CC/CAT → parcelă), indicatorul în cerc, axa unei străzi care străbate fața pe lungime, departe de margini (T20), acoperirea amprentei OSM (înregistrată local pe schelet), topologia (o insulă într-un gol e clădire), forma (benzi lungi = străzi), grosimea conturului; fețele mici cu X sunt anexe. 3a (T19): fețele clădire din aceeași amprentă OSM se unesc. 3a′ (T20): fețele stradă ale aceleiași străzi (același nume, altfel aceeași cale OSM) care se ating se unesc, cu fâșiile înguste de stradă de lângă ele. 3b (T12): simplificare / ortogonalizare pe graf, cu joncțiunile fixe.</li>
 <li><strong>Dizolvare</strong> — clădirile se atașează parcelei-gazdă cu latura comună cea mai lungă; fâșiile necodate se varsă în vecin.</li>
 </ol>
 <p>Măsurat pe dala Țicău față de etalonul desenat în Rhino: PQ clădiri 0,64 (precizie 0,80, regăsire 0,66, IoU mediu 0,89); parcele 0,34; fracția de contur partajat 0 → 0,63 prin trecerea la graful planar (T6b).</p>
@@ -788,7 +916,8 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <h3 id="ro-măsurarea-rezultatului">Măsurarea rezultatului<a class="anchor" href="#ro-măsurarea-rezultatului" title="Permanent link">¶</a></h3>
 <ul>
 <li>Alexander Kirillov, Kaiming He, Ross Girshick, Carsten Rother și Piotr Dollár, „Panoptic Segmentation”, în <em>CVPR 2019</em> (IEEE, 2019), 9396–9405, <a href="https://doi.org/10.1109/CVPR.2019.00963">https://doi.org/10.1109/CVPR.2019.00963</a>. PQ = SQ × RQ, metrica pe clase față de etalon.</li>
-<li>OpenStreetMap contributors, <em>OpenStreetMap</em>, <a href="https://www.openstreetmap.org">https://www.openstreetmap.org</a>, ODbL. Amprentele clădirilor ca indiciu de clasă și martor pentru rotirea foii.</li>
+<li>OpenStreetMap contributors, <em>OpenStreetMap</em>, <a href="https://www.openstreetmap.org">https://www.openstreetmap.org</a>, ODbL. Amprentele clădirilor ca indiciu de clasă și martor pentru rotirea foii; axele străzilor pentru fețele stradă (T20).</li>
+<li>Overture Maps Foundation, <em>Overture Maps data</em> (clădiri, transport), <a href="https://overturemaps.org">https://overturemaps.org</a>, ODbL / CDLA-Permissive-2.0. Sursă externă opțională.</li>
 <li>RapidOCR, <a href="https://github.com/RapidAI/RapidOCR">https://github.com/RapidAI/RapidOCR</a>. Recunoașterea codurilor (ONNX, pe procesor).</li>
 </ul>
 <h3 id="ro-instrumente">Instrumente<a class="anchor" href="#ro-instrumente" title="Permanent link">¶</a></h3>
@@ -798,6 +927,8 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <h2 id="ro-jurnalul-versiunilor-changelog">Jurnalul versiunilor (changelog)<a class="anchor" href="#ro-jurnalul-versiunilor-changelog" title="Permanent link">¶</a></h2>
 <p>Din <code>metadata.txt</code> al pluginului, cea mai nouă versiune prima (în engleză).</p>
 <ul class="changelog">
+<li><span class="version">0.3.23</span><span class="when">2026-11-05</span> — Dock made easier to use. Steps numbered 1-7 in their real order (Georeference before Assemble), each with its state written on the button (12/40 frames, 2 red seams...) and the next step outlined. Raster tab in three boxes: Steps, View (Show rasters as a toggle, Satellite + OSM, opacity), Corrections (Check sheets, Move sheet, Undo last move, Refine, Check placement) with QGIS icons. One selection bar under the tabs (Select on map, how many selected, clear), and the buttons say how many sheets they take (Extract 3 selected). Questions name their answers on the buttons instead of Yes / No / Cancel; Move sheet and Check placement turns are applied at once and put back by Undo last move (Ctrl+Z on the map, last 20). Move sheet / Select on map: a small box beside the cursor lists the keys - R turns 90 (with a selection it picks it up and turns it), Shift+R back, G, A all, Alt+A none, Esc, Ctrl+Z. Review appears after Extract, with keys (N next, Enter confirm, B P A S class, X reject, Esc). Progress bar and Stop only while a step runs; the log can be made taller; a legend under the sheet list. Engine: Test connection, Start Engine / Stop Engine on their own row; ? opens the manual without freezing QGIS; Rhino sync buttons in a 2 x 2 grid.</li>
+<li><span class="version">0.3.22</span><span class="when">2026-11-05</span> — External sources (⚙ Settings): building footprints and street centrelines chosen per project - OpenStreetMap buildings and streets (ticked), Overture Maps buildings and streets (through the Engine), and your own: WFS, ArcGIS FeatureServer, OGC API Features, an Overpass query, or any file / QGIS data source; Add / Edit / Remove, Import / Export as .json to give to others, Shared downloads the list other users sent in. Every answer cached per sheet in the project. Streets (Engine T20): a face the centreline runs through, along its length and away from its edges, is a street, and the street faces of one street (same name) are united with their sidewalk strips, one street one face per tile.</li>
 <li><span class="version">0.3.21</span><span class="when">2026-11-04</span> — The dock in tabs: the gear (Settings: project, scans folder with Set..., Engine local / cloud with its own address, Check with what the Engine answered, Start; work mode Online / Offline, offline = OSM footprints from the project cache only and no web layers), Raster, Vector (with the Review box), Rhino sync (only when the Rhino Sync plugin is installed), and a &#x27;?&#x27; button beside the tabs that opens the manual shipped in mapquilt/help (generated from 06-plugin/help with build_help.py: sections, literature, changelog; also published with GitHub Pages).</li>
 <li><span class="version">0.3.20</span><span class="when">2026-11-04</span> — Check placement (Raster column): is each scan the right way up in its cell? The OSM building outlines are laid over the scan&#x27;s proxy for the four quarter turns; the turn that puts them on ink wins (lift against chance). Sheets where another turn clearly wins are listed and, after Yes, turned (label quarters, as Move sheet + R) and georeferenced again; a sheet no turn fits is reported as probably in the wrong cell. Selected sheets, or all placed sheets; journal step &#x27;placement&#x27;.</li>
 <li><span class="version">0.3.19</span><span class="when">2026-11-04</span> — Refine / Extract selected with nothing selected switch Select sheets on and say to click the sheets on the map, then press the button again.</li>
