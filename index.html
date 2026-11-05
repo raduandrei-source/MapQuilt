@@ -72,7 +72,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
   <div>
     <h1>MapQuilt</h1>
     <div class="sub">Automatic raster assembly, georeferencing and vectorisation of scanned cadastral maps in QGIS</div>
-    <div class="ver">version 0.3.28 · manual generated on 2026-11-05 from <code>06-plugin/help/mapquilt/en</code> · <a href="https://raduandrei-source.github.io/MapQuilt/">online version</a></div>
+    <div class="ver">version 0.3.29 · manual generated on 2026-11-05 from <code>06-plugin/help/mapquilt/en</code> · <a href="https://raduandrei-source.github.io/MapQuilt/">online version</a></div>
   </div>
 </header>
 <h2 id="en-what-mapquilt-is">What MapQuilt is<a class="anchor" href="#en-what-mapquilt-is" title="Permanent link">¶</a></h2>
@@ -216,30 +216,56 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <p>For streets, give the attribute that holds the street name (<em>Street name field</em>): faces are united street by street, by name. For green spaces, give the attribute that holds the category (<em>Green category field</em>: <code>alignment</code>, <code>landscaped</code>, <code>unlandscaped</code> or <code>grass</code>; a line counts as a tree row, i.e. alignment). <strong>Edit…</strong> changes one of yours (a built-in one is copied as yours), <strong>Remove</strong> deletes one of yours.</p>
 <p><strong>Sharing.</strong> <strong>Export…</strong> writes the selected source (or all of yours) as a small <code>.json</code> file; someone else adds it with <strong>Import…</strong>. To offer a source to every MapQuilt user, open an issue with the file in the <a href="https://github.com/raduandrei-source/MapQuilt/issues">MapQuilt repository</a>; once checked, it goes into the shared list, which <strong>Shared</strong> downloads (shared sources come unticked). Say the licence: only sources whose terms allow it are listed.</p>
 <h3 id="en-drawing-building-outlines">Drawing: building outlines<a class="anchor" href="#en-drawing-building-outlines" title="Permanent link">¶</a></h3>
-<p>How the outlines of the buildings come out of Extract (the project remembers the choice; <strong>Shapes</strong> in the Vector tab applies a new choice to the sheets already extracted, in seconds):</p>
+<p>How the outlines of the buildings come out of Extract and Shapes (the project remembers the choice; <strong>Shapes</strong> in the Vector tab applies a new choice to the sheets already extracted, in seconds). Every outline is first read as <strong>lines and arcs of a circle</strong> (Rosin &amp; West 1995), then every wall is put in a <strong>family</strong>: on the building's axis or its perpendicular (90°), on a diagonal (45°), free (kept in its own direction) or an arc (kept as an arc). The vertices are then adjusted all at once by least squares, neighbours staying joined, no vertex moving more than 1 m (T22). A preset says which families a tissue may have:</p>
 <table>
 <thead>
 <tr>
-<th>Choice</th>
-<th>What it does</th>
+<th>Preset</th>
+<th>For</th>
+<th>Families</th>
+<th>Axis tolerance</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Squared</strong> (recommended)</td>
-<td>every vertex of the drawing is adjusted at once (least squares): walls within 12° of the building's axis become exactly parallel or perpendicular, also at the corners shared with lot limits; neighbours stay joined; no vertex moves more than 1 m (T22)</td>
+<td><strong>Mixed</strong> (default)</td>
+<td>anything: each building chooses from its own outline</td>
+<td>90°, 45°, free, curved</td>
+<td>12°</td>
 </tr>
 <tr>
-<td>Straightened</td>
-<td>the older method (T12): walls snapped to the axis between fixed ends, so a corner where three lines meet stays as drawn</td>
+<td>Planned 90°</td>
+<td>blocks, grids, industry</td>
+<td>90° only: every wall goes on an axis</td>
+<td>15°</td>
 </tr>
 <tr>
-<td>As drawn</td>
-<td>only the jagged pixels are smoothed (0.3 m)</td>
+<td>Planned 90° + 45°</td>
+<td>interwar, modernist, chamfered corners, halls with 45° ends</td>
+<td>90°, 45°</td>
+<td>12°</td>
+</tr>
+<tr>
+<td>Organic</td>
+<td>old quarters, lots at odd angles: a wall more than 8° off the axis stays as drawn</td>
+<td>90°, 45°, free, curved</td>
+<td>8°</td>
+</tr>
+<tr>
+<td>Curved</td>
+<td>tanks, round halls, apses: arcs looked for harder (15 % of the outline is enough)</td>
+<td>all</td>
+<td>12°</td>
+</tr>
+<tr>
+<td>Squared / Straightened / As drawn</td>
+<td>the older modes (0.3.27, T12, none)</td>
+<td>—</td>
+<td>—</td>
 </tr>
 </tbody>
 </table>
-<p>On the Țicău reference, Squared gives 9 vertices per building (the hand-drawn reference: 8) and 62 % of the near-right corners exactly square, at the same matching quality as the others, without moving the lot limits. An Engine older than 0.6 has no Squared: Extract then uses Straightened and says so.</p>
+<p>The family the Engine chose is written on each face (<code>shape</code>), the arcs it kept too (<code>arcs</code>). In Review the keys <kbd>9</kbd> <kbd>4</kbd> <kbd>F</kbd> <kbd>O</kbd> set a family by hand (<code>shape_set</code>); it wins over the preset at the next Shapes and survives later Shapes runs. On the Țicău reference (all rectilinear) Mixed gives what Squared gave (9 vertices per building, 62 % of the near-right corners exactly square); on the Gara sheet the round tanks and C-shaped halls keep their arcs under Mixed and Curved and are flattened under Planned 90°. Needs Engine 0.8 or newer; an older one gets the plain modes.</p>
 <h3 id="en-the-manual">? — the manual<a class="anchor" href="#en-the-manual" title="Permanent link">¶</a></h3>
 <p>The <strong>?</strong> button next to the tabs opens this manual: the copy shipped with the plugin (<code>mapquilt/help/index.html</code>, works without internet), or, if it is missing, the online version.</p>
 <h2 id="en-the-raster-tab-the-scans">The Raster tab — the scans<a class="anchor" href="#en-the-raster-tab-the-scans" title="Permanent link">¶</a></h2>
@@ -421,6 +447,10 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <td>the shape is right, the class was wrong; the plugin changes it and marks the face as confirmed</td>
 </tr>
 <tr>
+<td><strong>Shape</strong> <kbd>9</kbd> 90°, <kbd>4</kbd> 45°, <kbd>F</kbd> free, <kbd>O</kbd> arc</td>
+<td>the family of the building's walls, set by hand (⚙ › Drawing); Shapes squares it that way afterwards</td>
+</tr>
+<tr>
 <td><strong>Reject</strong> <kbd>X</kbd></td>
 <td>a vectorization error (a false island, an invented boundary); the face is removed from the result</td>
 </tr>
@@ -510,7 +540,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <li><strong>Annotations</strong> — texts and indicator circles are detected and masked; the lines they interrupt are restored ("bridging").</li>
 <li><strong>Line width</strong> — the distance to the background on the cleaned ink, before thinning; the Otsu threshold separates thick lines (building outlines) from thin ones (boundaries).</li>
 <li><strong>Skeleton → shared edges</strong> — thinning, pruning of short branches (vectorized: 340 s → 2 s per sheet), snapping of loose ends, pixel segments joined into polylines between junctions, simplified with fixed ends.</li>
-<li><strong>Faces and classes</strong> — polygonization of the edges; each face gets its class from, in order: the label inside (C → building, DS/DP → street, CR/CC/CAT → parcel), the circled indicator, a street centreline running through the face along its length and away from its edges (T20), the coverage by the OSM footprint (registered locally on the skeleton), topology (an island in a void is a building), shape (long strips = streets), the outline width; small faces with an X are annexes. 3a (T19): building faces from the same OSM footprint are merged. 3a′ (T20): the street faces of one street (same name, else same way) that touch are merged — only across a line the centreline crosses at 45° or more, so a kerb or sidewalk line along the street stays even where OSM rides on it (T20b); a band narrower than 3.5 m (a sidewalk) is never called a street by the centreline alone, and sidewalk strips are not joined to the carriageway. 3c (T21): a face without a code, at least half in OSM green spaces of one category, becomes <code>green_alignment</code>, <code>green_landscaped</code> or <code>green_unlandscaped</code>; a coded parcel only gets the category as an attribute. 3b (T12, T22): simplification on the graph, then squaring: by default a least-squares adjustment of every vertex (junctions included) with the condition "exactly on the building's axis" on every wall within 12° of it, no vertex moving more than 1 m; the older mode keeps the junctions fixed.</li>
+<li><strong>Faces and classes</strong> — polygonization of the edges; each face gets its class from, in order: the label inside (C → building, DS/DP → street, CR/CC/CAT → parcel), the circled indicator, a street centreline running through the face along its length and away from its edges (T20), the coverage by the OSM footprint (registered locally on the skeleton), topology (an island in a void is a building), shape (long strips = streets), the outline width; small faces with an X are annexes. 3a (T19): building faces from the same OSM footprint are merged. 3a′ (T20): the street faces of one street (same name, else same way) that touch are merged — only across a line the centreline crosses at 45° or more, so a kerb or sidewalk line along the street stays even where OSM rides on it (T20b); a band narrower than 3.5 m (a sidewalk) is never called a street by the centreline alone, and sidewalk strips are not joined to the carriageway. 3c (T21): a face without a code, at least half in OSM green spaces of one category, becomes <code>green_alignment</code>, <code>green_landscaped</code> or <code>green_unlandscaped</code>; a coded parcel only gets the category as an attribute. 3b (T12, T22, T23): simplification on the graph; every edge read as lines and arcs; a shape family per building from a preset (⚙ › Drawing) or set by hand; then squaring: by default a least-squares adjustment of every vertex (junctions included) with the condition "exactly on the building's axis" on every wall within 12° of it, no vertex moving more than 1 m; the older mode keeps the junctions fixed.</li>
 <li><strong>Dissolve</strong> — buildings are attached to the host parcel with the longest shared side; uncoded strips are merged into their neighbour.</li>
 </ol>
 <p>Measured on the Țicău tile against the reference drawing made in Rhino: building PQ 0.64 (precision 0.80, recall 0.66, mean IoU 0.89); parcels 0.34; the fraction of shared outline went from 0 to 0.63 with the move to the planar graph (T6b).</p>
@@ -561,6 +591,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <h2 id="en-changelog">Changelog<a class="anchor" href="#en-changelog" title="Permanent link">¶</a></h2>
 <p>From the plugin's <code>metadata.txt</code>, newest first.</p>
 <ul class="changelog">
+<li><span class="version">0.3.29</span><span class="when">2026-11-05</span> — Shape families and presets (Engine 0.8.0, T23 steps B and C). Every outline is read as lines and arcs of a circle; every building gets a family - 90 degrees, 45 degrees, free or curved - written on the face (shape, arcs); arcs are kept as arcs, 45-degree walls on their diagonals, oblique walls in their own direction. Settings &gt; Drawing: presets Mixed (default; each building chooses), Planned 90, Planned 90 + 45, Organic, Curved, plus the older modes. Review: keys 9 / 4 / F / O set a family by hand; Shapes sends it to the Engine and it survives later runs.</li>
 <li><span class="version">0.3.28</span><span class="when">2026-11-05</span> — Shapes (Vector tab; Engine 0.7.0, T23 step A): the squaring becomes a step of its own, repeatable without extracting. Extract keeps the raw faces of every tile in the project (cache/raw/&lt;sheet&gt;/); Shapes sends them through the Engine&#x27;s squaring step alone (/v1/regularize) with the outline mode of Settings &gt; Drawing and replaces the sheet&#x27;s faces in seconds, review decisions carried over to the overlapping faces, edges and labels untouched; stitched faces of the sheet are dropped (run Stitch again).</li>
 <li><span class="version">0.3.27</span><span class="when">2026-11-05</span> — Squared building outlines (Engine 0.6.0, T22): a least-squares adjustment of every vertex of the drawing at once, junctions included - walls within 12 degrees of the building&#x27;s axis exactly parallel or perpendicular, corners on lot limits square too, neighbours stay joined, no vertex moves more than 1 m. Settings &gt; Drawing &gt; Building outlines: Squared (default), Straightened (the older T12 method), As drawn. Țicău: 9 vertices per building (reference 8), 62 % of the near-right corners exactly square (Straightened 41 %), same PQ, lot limits no longer pushed (parcel PQ 0.337 vs 0.321). An older Engine falls back to Straightened.</li>
 <li><span class="version">0.3.26</span><span class="when">2026-11-05</span> — Join faces (Vector tab, Edit box): press inside a face, drag onto a neighbour of the same class and release - the two become one (codes of both, buildings counted together, review state edited); green while they can be joined, red with the reason in the box at the cursor when not; gaps up to 0.3 m closed; Ctrl+Z on the map or Undo join puts them back (last 50); every join in the journal.</li>
@@ -602,7 +633,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
   <div>
     <h1>MapQuilt</h1>
     <div class="sub">Asamblare raster, georeferențiere și vectorizare automată a planurilor cadastrale scanate, în QGIS</div>
-    <div class="ver">versiunea 0.3.28 · manual generat la 2026-11-05 din <code>06-plugin/help/mapquilt/ro</code> · <a href="https://raduandrei-source.github.io/MapQuilt/">varianta online</a></div>
+    <div class="ver">versiunea 0.3.29 · manual generat la 2026-11-05 din <code>06-plugin/help/mapquilt/ro</code> · <a href="https://raduandrei-source.github.io/MapQuilt/">varianta online</a></div>
   </div>
 </header>
 <h2 id="ro-ce-este-mapquilt">Ce este MapQuilt<a class="anchor" href="#ro-ce-este-mapquilt" title="Permanent link">¶</a></h2>
@@ -746,30 +777,56 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <p>La străzi, dați atributul care ține numele străzii (<em>Street name field</em>): fețele se unesc stradă cu stradă, după nume. La spațiile verzi, dați atributul care ține categoria (<em>Green category field</em>: <code>alignment</code>, <code>landscaped</code>, <code>unlandscaped</code> sau <code>grass</code>; o linie contează ca șir de arbori, adică de aliniament). <strong>Edit…</strong> modifică una de-a dvs. (una din plugin se copiază ca a dvs.), <strong>Remove</strong> șterge una de-a dvs.</p>
 <p><strong>Partajare.</strong> <strong>Export…</strong> scrie sursa selectată (sau toate ale dvs.) ca un fișier <code>.json</code> mic; altcineva o adaugă cu <strong>Import…</strong>. Ca să oferiți o sursă tuturor utilizatorilor MapQuilt, deschideți un issue cu fișierul în <a href="https://github.com/raduandrei-source/MapQuilt/issues">depozitul MapQuilt</a>; după verificare, intră în lista comună, pe care <strong>Shared</strong> o descarcă (sursele comune vin nebifate). Spuneți licența: se listează doar sursele ai căror termeni permit asta.</p>
 <h3 id="ro-drawing-contururile-clădirilor">Drawing: contururile clădirilor<a class="anchor" href="#ro-drawing-contururile-clădirilor" title="Permanent link">¶</a></h3>
-<p>Cum ies contururile clădirilor din Extract (proiectul ține minte alegerea; <strong>Shapes</strong> din tabul Vector aplică o alegere nouă pe foile deja extrase, în câteva secunde):</p>
+<p>Cum ies contururile clădirilor din Extract și Shapes (proiectul ține minte alegerea; <strong>Shapes</strong> din tabul Vector aplică o alegere nouă pe foile deja extrase, în câteva secunde). Fiecare contur e citit întâi ca <strong>linii și arce de cerc</strong> (Rosin &amp; West 1995), apoi fiecare perete primește o <strong>familie</strong>: pe axa clădirii sau pe perpendiculara ei (90°), pe o diagonală (45°), liber (păstrat în direcția lui) sau arc (păstrat ca arc). Vârfurile se ajustează apoi toate deodată prin metoda celor mai mici pătrate, vecinii rămân lipiți, niciun vârf nu se mută mai mult de 1 m (T22). Un preset spune ce familii poate avea un țesut:</p>
 <table>
 <thead>
 <tr>
-<th>Alegere</th>
-<th>Ce face</th>
+<th>Preset</th>
+<th>Pentru</th>
+<th>Familii</th>
+<th>Toleranța la axă</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Squared</strong> (recomandat)</td>
-<td>toate vârfurile desenului se ajustează deodată (metoda celor mai mici pătrate): pereții aflați la cel mult 12° de axa clădirii devin exact paraleli sau perpendiculari, și la colțurile comune cu limitele de lot; vecinii rămân lipiți; niciun vârf nu se mută mai mult de 1 m (T22)</td>
+<td><strong>Mixed</strong> (implicit)</td>
+<td>orice: fiecare clădire alege din propriul contur</td>
+<td>90°, 45°, liber, curb</td>
+<td>12°</td>
 </tr>
 <tr>
-<td>Straightened</td>
-<td>metoda veche (T12): pereții fixați pe axă între capete fixe, deci un colț unde se întâlnesc trei linii rămâne cum e desenat</td>
+<td>Planned 90°</td>
+<td>blocuri, grile, industrie</td>
+<td>doar 90°: orice perete merge pe o axă</td>
+<td>15°</td>
 </tr>
 <tr>
-<td>As drawn</td>
-<td>doar zimții pixelilor se netezesc (0,3 m)</td>
+<td>Planned 90° + 45°</td>
+<td>interbelic, modernist, colțuri teșite, hale cu capete în 45°</td>
+<td>90°, 45°</td>
+<td>12°</td>
+</tr>
+<tr>
+<td>Organic</td>
+<td>cartiere vechi, loturi strâmbe: un perete la peste 8° de axă rămâne cum e desenat</td>
+<td>90°, 45°, liber, curb</td>
+<td>8°</td>
+</tr>
+<tr>
+<td>Curved</td>
+<td>rezervoare, hale rotunde, abside: arcele sunt căutate mai insistent (15 % din contur ajunge)</td>
+<td>toate</td>
+<td>12°</td>
+</tr>
+<tr>
+<td>Squared / Straightened / As drawn</td>
+<td>modurile vechi (0.3.27, T12, fără)</td>
+<td>—</td>
+<td>—</td>
 </tr>
 </tbody>
 </table>
-<p>Pe etalonul Țicău, Squared dă 9 vârfuri pe clădire (desenul de mână: 8) și 62 % din colțurile aproape drepte exact drepte, la aceeași calitate a potrivirii, fără să miște limitele de lot. Un Engine mai vechi de 0.6 nu are Squared: Extract folosește atunci Straightened și spune asta.</p>
+<p>Familia aleasă de Engine se scrie pe fiecare față (<code>shape</code>), și arcele păstrate (<code>arcs</code>). În Review, tastele <kbd>9</kbd> <kbd>4</kbd> <kbd>F</kbd> <kbd>O</kbd> pun o familie de mână (<code>shape_set</code>); ea are întâietate față de preset la următorul Shapes și rezistă la rulările următoare. Pe etalonul Țicău (toate drepte) Mixed dă ce dădea Squared (9 vârfuri pe clădire, 62 % din colțurile aproape drepte exact drepte); pe foaia Gării, rezervoarele rotunde și halele în formă de C își păstrează arcele sub Mixed și Curved și sunt aplatizate sub Planned 90°. Are nevoie de Engine 0.8 sau mai nou; unul mai vechi primește modurile simple.</p>
 <h3 id="ro-manualul">? — manualul<a class="anchor" href="#ro-manualul" title="Permanent link">¶</a></h3>
 <p>Butonul <strong>?</strong> de lângă taburi deschide acest manual: copia livrată cu pluginul (<code>mapquilt/help/index.html</code>, merge fără internet), iar dacă lipsește, varianta online.</p>
 <h2 id="ro-tabul-raster-scanările">Tabul Raster — scanările<a class="anchor" href="#ro-tabul-raster-scanările" title="Permanent link">¶</a></h2>
@@ -952,6 +1009,10 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <td>forma e bună, clasa era greșită; pluginul o schimbă și marchează fața confirmată</td>
 </tr>
 <tr>
+<td><strong>Shape</strong> <kbd>9</kbd> 90°, <kbd>4</kbd> 45°, <kbd>F</kbd> liber, <kbd>O</kbd> arc</td>
+<td>familia pereților clădirii, pusă de mână (⚙ › Drawing); Shapes o îndreaptă apoi așa</td>
+</tr>
+<tr>
 <td><strong>Reject</strong> <kbd>X</kbd></td>
 <td>o eroare de vectorizare (o insulă falsă, o limită inventată); fața iese din rezultat</td>
 </tr>
@@ -1041,7 +1102,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <li><strong>Adnotări</strong> — textele și cercurile-indicator se detectează și se mască; liniile întrerupte de ele se refac („bridging”).</li>
 <li><strong>Grosimea liniei</strong> — distanța până la fundal pe cerneala curățată, înainte de subțiere; pragul Otsu desparte liniile groase (contur de clădire) de cele subțiri (limite).</li>
 <li><strong>Scheletul → muchii comune</strong> — subțiere, tăierea ramurilor scurte (vectorizat: 340 s → 2 s pe foaie), lipirea capetelor libere, segmente de pixeli unite în polilinii între joncțiuni, simplificate cu capetele fixe.</li>
-<li><strong>Fețe și clase</strong> — poligonizarea muchiilor; fiecare față primește clasa după, în ordine: eticheta din interior (C → clădire, DS/DP → stradă, CR/CC/CAT → parcelă), indicatorul în cerc, axa unei străzi care străbate fața pe lungime, departe de margini (T20), acoperirea amprentei OSM (înregistrată local pe schelet), topologia (o insulă într-un gol e clădire), forma (benzi lungi = străzi), grosimea conturului; fețele mici cu X sunt anexe. 3a (T19): fețele clădire din aceeași amprentă OSM se unesc. 3a′ (T20): fețele stradă ale aceleiași străzi (același nume, altfel aceeași cale OSM) care se ating se unesc — doar peste o linie pe care axa o taie la 45° sau mai mult, așa că o bordură sau linia unui trotuar de-a lungul străzii rămâne și acolo unde OSM o calcă (T20b); o fâșie mai îngustă de 3,5 m (un trotuar) nu devine stradă doar din axă, iar trotuarele nu se lipesc de carosabil. 3c (T21): o față fără cod, cel puțin pe jumătate în spații verzi OSM de aceeași categorie, devine <code>green_alignment</code>, <code>green_landscaped</code> sau <code>green_unlandscaped</code>; o parcelă codată primește doar categoria ca atribut. 3b (T12, T22): simplificare pe graf, apoi îndreptare: implicit o compensare prin metoda celor mai mici pătrate a tuturor vârfurilor (și a joncțiunilor), cu condiția „exact pe axa clădirii” pe fiecare perete aflat la cel mult 12° de ea, niciun vârf mutat mai mult de 1 m; modul vechi ține joncțiunile fixe.</li>
+<li><strong>Fețe și clase</strong> — poligonizarea muchiilor; fiecare față primește clasa după, în ordine: eticheta din interior (C → clădire, DS/DP → stradă, CR/CC/CAT → parcelă), indicatorul în cerc, axa unei străzi care străbate fața pe lungime, departe de margini (T20), acoperirea amprentei OSM (înregistrată local pe schelet), topologia (o insulă într-un gol e clădire), forma (benzi lungi = străzi), grosimea conturului; fețele mici cu X sunt anexe. 3a (T19): fețele clădire din aceeași amprentă OSM se unesc. 3a′ (T20): fețele stradă ale aceleiași străzi (același nume, altfel aceeași cale OSM) care se ating se unesc — doar peste o linie pe care axa o taie la 45° sau mai mult, așa că o bordură sau linia unui trotuar de-a lungul străzii rămâne și acolo unde OSM o calcă (T20b); o fâșie mai îngustă de 3,5 m (un trotuar) nu devine stradă doar din axă, iar trotuarele nu se lipesc de carosabil. 3c (T21): o față fără cod, cel puțin pe jumătate în spații verzi OSM de aceeași categorie, devine <code>green_alignment</code>, <code>green_landscaped</code> sau <code>green_unlandscaped</code>; o parcelă codată primește doar categoria ca atribut. 3b (T12, T22, T23): simplificare pe graf; fiecare muchie citită ca linii și arce; o familie de formă pe clădire, din preset (⚙ › Drawing) sau pusă de mână; apoi îndreptare: implicit o compensare prin metoda celor mai mici pătrate a tuturor vârfurilor (și a joncțiunilor), cu condiția „exact pe axa clădirii” pe fiecare perete aflat la cel mult 12° de ea, niciun vârf mutat mai mult de 1 m; modul vechi ține joncțiunile fixe.</li>
 <li><strong>Dizolvare</strong> — clădirile se atașează parcelei-gazdă cu latura comună cea mai lungă; fâșiile necodate se varsă în vecin.</li>
 </ol>
 <p>Măsurat pe dala Țicău față de etalonul desenat în Rhino: PQ clădiri 0,64 (precizie 0,80, regăsire 0,66, IoU mediu 0,89); parcele 0,34; fracția de contur partajat 0 → 0,63 prin trecerea la graful planar (T6b).</p>
@@ -1092,6 +1153,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <h2 id="ro-jurnalul-versiunilor-changelog">Jurnalul versiunilor (changelog)<a class="anchor" href="#ro-jurnalul-versiunilor-changelog" title="Permanent link">¶</a></h2>
 <p>Din <code>metadata.txt</code> al pluginului, cea mai nouă versiune prima (în engleză).</p>
 <ul class="changelog">
+<li><span class="version">0.3.29</span><span class="when">2026-11-05</span> — Shape families and presets (Engine 0.8.0, T23 steps B and C). Every outline is read as lines and arcs of a circle; every building gets a family - 90 degrees, 45 degrees, free or curved - written on the face (shape, arcs); arcs are kept as arcs, 45-degree walls on their diagonals, oblique walls in their own direction. Settings &gt; Drawing: presets Mixed (default; each building chooses), Planned 90, Planned 90 + 45, Organic, Curved, plus the older modes. Review: keys 9 / 4 / F / O set a family by hand; Shapes sends it to the Engine and it survives later runs.</li>
 <li><span class="version">0.3.28</span><span class="when">2026-11-05</span> — Shapes (Vector tab; Engine 0.7.0, T23 step A): the squaring becomes a step of its own, repeatable without extracting. Extract keeps the raw faces of every tile in the project (cache/raw/&lt;sheet&gt;/); Shapes sends them through the Engine&#x27;s squaring step alone (/v1/regularize) with the outline mode of Settings &gt; Drawing and replaces the sheet&#x27;s faces in seconds, review decisions carried over to the overlapping faces, edges and labels untouched; stitched faces of the sheet are dropped (run Stitch again).</li>
 <li><span class="version">0.3.27</span><span class="when">2026-11-05</span> — Squared building outlines (Engine 0.6.0, T22): a least-squares adjustment of every vertex of the drawing at once, junctions included - walls within 12 degrees of the building&#x27;s axis exactly parallel or perpendicular, corners on lot limits square too, neighbours stay joined, no vertex moves more than 1 m. Settings &gt; Drawing &gt; Building outlines: Squared (default), Straightened (the older T12 method), As drawn. Țicău: 9 vertices per building (reference 8), 62 % of the near-right corners exactly square (Straightened 41 %), same PQ, lot limits no longer pushed (parcel PQ 0.337 vs 0.321). An older Engine falls back to Straightened.</li>
 <li><span class="version">0.3.26</span><span class="when">2026-11-05</span> — Join faces (Vector tab, Edit box): press inside a face, drag onto a neighbour of the same class and release - the two become one (codes of both, buildings counted together, review state edited); green while they can be joined, red with the reason in the box at the cursor when not; gaps up to 0.3 m closed; Ctrl+Z on the map or Undo join puts them back (last 50); every join in the journal.</li>
