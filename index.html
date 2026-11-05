@@ -72,7 +72,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
   <div>
     <h1>MapQuilt</h1>
     <div class="sub">Automatic raster assembly, georeferencing and vectorisation of scanned cadastral maps in QGIS</div>
-    <div class="ver">version 0.3.26 · manual generated on 2026-11-05 from <code>06-plugin/help/mapquilt/en</code> · <a href="https://raduandrei-source.github.io/MapQuilt/">online version</a></div>
+    <div class="ver">version 0.3.27 · manual generated on 2026-11-05 from <code>06-plugin/help/mapquilt/en</code> · <a href="https://raduandrei-source.github.io/MapQuilt/">online version</a></div>
   </div>
 </header>
 <h2 id="en-what-mapquilt-is">What MapQuilt is<a class="anchor" href="#en-what-mapquilt-is" title="Permanent link">¶</a></h2>
@@ -215,6 +215,31 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 </ul>
 <p>For streets, give the attribute that holds the street name (<em>Street name field</em>): faces are united street by street, by name. For green spaces, give the attribute that holds the category (<em>Green category field</em>: <code>alignment</code>, <code>landscaped</code>, <code>unlandscaped</code> or <code>grass</code>; a line counts as a tree row, i.e. alignment). <strong>Edit…</strong> changes one of yours (a built-in one is copied as yours), <strong>Remove</strong> deletes one of yours.</p>
 <p><strong>Sharing.</strong> <strong>Export…</strong> writes the selected source (or all of yours) as a small <code>.json</code> file; someone else adds it with <strong>Import…</strong>. To offer a source to every MapQuilt user, open an issue with the file in the <a href="https://github.com/raduandrei-source/MapQuilt/issues">MapQuilt repository</a>; once checked, it goes into the shared list, which <strong>Shared</strong> downloads (shared sources come unticked). Say the licence: only sources whose terms allow it are listed.</p>
+<h3 id="en-drawing-building-outlines">Drawing: building outlines<a class="anchor" href="#en-drawing-building-outlines" title="Permanent link">¶</a></h3>
+<p>How the outlines of the buildings come out of Extract (applies to the next Extract; the project remembers the choice):</p>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Squared</strong> (recommended)</td>
+<td>every vertex of the drawing is adjusted at once (least squares): walls within 12° of the building's axis become exactly parallel or perpendicular, also at the corners shared with lot limits; neighbours stay joined; no vertex moves more than 1 m (T22)</td>
+</tr>
+<tr>
+<td>Straightened</td>
+<td>the older method (T12): walls snapped to the axis between fixed ends, so a corner where three lines meet stays as drawn</td>
+</tr>
+<tr>
+<td>As drawn</td>
+<td>only the jagged pixels are smoothed (0.3 m)</td>
+</tr>
+</tbody>
+</table>
+<p>On the Țicău reference, Squared gives 9 vertices per building (the hand-drawn reference: 8) and 62 % of the near-right corners exactly square, at the same matching quality as the others, without moving the lot limits. An Engine older than 0.6 has no Squared: Extract then uses Straightened and says so.</p>
 <h3 id="en-the-manual">? — the manual<a class="anchor" href="#en-the-manual" title="Permanent link">¶</a></h3>
 <p>The <strong>?</strong> button next to the tabs opens this manual: the copy shipped with the plugin (<code>mapquilt/help/index.html</code>, works without internet), or, if it is missing, the online version.</p>
 <h2 id="en-the-raster-tab-the-scans">The Raster tab — the scans<a class="anchor" href="#en-the-raster-tab-the-scans" title="Permanent link">¶</a></h2>
@@ -398,7 +423,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <p>For each pair of neighbouring sheets, the faces that touch the seam band (± the tolerance, by default 1.5 m = the 90th percentile of the measured noise), of the same class and with overlapping intervals along the common line, are joined; the edges marked "seam" are deleted and the faces are re-polygonized. Nothing is moved, nothing is warped. On DXF sheets the line ends are joined too. Faces already joined are not matched a second time, so Stitch can be run again after a new Import.</p>
 <h3 id="en-7-export-dxf">7 · Export DXF<a class="anchor" href="#en-7-export-dxf" title="Permanent link">¶</a></h3>
 <p>Writes the DXF with one layer per class (<code>building</code>, <code>parcel</code>, <code>street</code>, <code>annex</code>, <code>other</code>; on DXF sheets, also the lines), in the target CRS, plus a JSON report (the counts, the reviewed faces, the seams). The layers are first copied into memory, so that the GeoPackage in WAL mode does not produce an empty DXF.</p>
-<p>Simplification and orthogonalization of the outlines (the Engine's <code>regularize</code> parameter: <code>none</code>, <code>simplify</code>, <code>orthogonal</code>) are done on the shared edges, with the junctions fixed, so that neighbours stay attached; for "hand-drawn" style drawings the recommendation is <code>orthogonal</code> (23 → 11 vertices per building at the same quality).</p>
+<p>Simplification and squaring of the outlines (⚙ › Drawing › Building outlines; the Engine's <code>regularize</code>: <code>none</code>, <code>orthogonal</code>, <code>squared</code>) are done on the shared edges, so that neighbours stay attached; <strong>Squared</strong>, the default, adjusts every vertex at once and squares the corners at lot limits too (23 → 9 vertices per building at the same quality).</p>
 <h2 id="en-the-journal-the-status-bar-stop">The journal, the status bar, Stop<a class="anchor" href="#en-the-journal-the-status-bar-stop" title="Permanent link">¶</a></h2>
 <h3 id="en-the-project-journal">The project journal<a class="anchor" href="#en-the-project-journal" title="Permanent link">¶</a></h3>
 <p>Each run of a step is written to <code>project.json</code> (<code>journal</code>: step, date, plugin version, a one-line summary; <code>steps</code>: the last run of each step). Below the tabs, the "Last … · Next …" line says how far you have got, each button has its last run in its tooltip, and when the project opens the journal appears in the log. The state of the coloured dots comes from the sheet data (frames, chains, extractions), not from the journal, so a project written by an old version is described correctly.</p>
@@ -477,7 +502,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <li><strong>Annotations</strong> — texts and indicator circles are detected and masked; the lines they interrupt are restored ("bridging").</li>
 <li><strong>Line width</strong> — the distance to the background on the cleaned ink, before thinning; the Otsu threshold separates thick lines (building outlines) from thin ones (boundaries).</li>
 <li><strong>Skeleton → shared edges</strong> — thinning, pruning of short branches (vectorized: 340 s → 2 s per sheet), snapping of loose ends, pixel segments joined into polylines between junctions, simplified with fixed ends.</li>
-<li><strong>Faces and classes</strong> — polygonization of the edges; each face gets its class from, in order: the label inside (C → building, DS/DP → street, CR/CC/CAT → parcel), the circled indicator, a street centreline running through the face along its length and away from its edges (T20), the coverage by the OSM footprint (registered locally on the skeleton), topology (an island in a void is a building), shape (long strips = streets), the outline width; small faces with an X are annexes. 3a (T19): building faces from the same OSM footprint are merged. 3a′ (T20): the street faces of one street (same name, else same way) that touch are merged — only across a line the centreline crosses at 45° or more, so a kerb or sidewalk line along the street stays even where OSM rides on it (T20b); a band narrower than 3.5 m (a sidewalk) is never called a street by the centreline alone, and sidewalk strips are not joined to the carriageway. 3c (T21): a face without a code, at least half in OSM green spaces of one category, becomes <code>green_alignment</code>, <code>green_landscaped</code> or <code>green_unlandscaped</code>; a coded parcel only gets the category as an attribute. 3b (T12): simplification / orthogonalization on the graph, with fixed junctions.</li>
+<li><strong>Faces and classes</strong> — polygonization of the edges; each face gets its class from, in order: the label inside (C → building, DS/DP → street, CR/CC/CAT → parcel), the circled indicator, a street centreline running through the face along its length and away from its edges (T20), the coverage by the OSM footprint (registered locally on the skeleton), topology (an island in a void is a building), shape (long strips = streets), the outline width; small faces with an X are annexes. 3a (T19): building faces from the same OSM footprint are merged. 3a′ (T20): the street faces of one street (same name, else same way) that touch are merged — only across a line the centreline crosses at 45° or more, so a kerb or sidewalk line along the street stays even where OSM rides on it (T20b); a band narrower than 3.5 m (a sidewalk) is never called a street by the centreline alone, and sidewalk strips are not joined to the carriageway. 3c (T21): a face without a code, at least half in OSM green spaces of one category, becomes <code>green_alignment</code>, <code>green_landscaped</code> or <code>green_unlandscaped</code>; a coded parcel only gets the category as an attribute. 3b (T12, T22): simplification on the graph, then squaring: by default a least-squares adjustment of every vertex (junctions included) with the condition "exactly on the building's axis" on every wall within 12° of it, no vertex moving more than 1 m; the older mode keeps the junctions fixed.</li>
 <li><strong>Dissolve</strong> — buildings are attached to the host parcel with the longest shared side; uncoded strips are merged into their neighbour.</li>
 </ol>
 <p>Measured on the Țicău tile against the reference drawing made in Rhino: building PQ 0.64 (precision 0.80, recall 0.66, mean IoU 0.89); parcels 0.34; the fraction of shared outline went from 0 to 0.63 with the move to the planar graph (T6b).</p>
@@ -528,6 +553,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <h2 id="en-changelog">Changelog<a class="anchor" href="#en-changelog" title="Permanent link">¶</a></h2>
 <p>From the plugin's <code>metadata.txt</code>, newest first.</p>
 <ul class="changelog">
+<li><span class="version">0.3.27</span><span class="when">2026-11-05</span> — Squared building outlines (Engine 0.6.0, T22): a least-squares adjustment of every vertex of the drawing at once, junctions included - walls within 12 degrees of the building&#x27;s axis exactly parallel or perpendicular, corners on lot limits square too, neighbours stay joined, no vertex moves more than 1 m. Settings &gt; Drawing &gt; Building outlines: Squared (default), Straightened (the older T12 method), As drawn. Țicău: 9 vertices per building (reference 8), 62 % of the near-right corners exactly square (Straightened 41 %), same PQ, lot limits no longer pushed (parcel PQ 0.337 vs 0.321). An older Engine falls back to Straightened.</li>
 <li><span class="version">0.3.26</span><span class="when">2026-11-05</span> — Join faces (Vector tab, Edit box): press inside a face, drag onto a neighbour of the same class and release - the two become one (codes of both, buildings counted together, review state edited); green while they can be joined, red with the reason in the box at the cursor when not; gaps up to 0.3 m closed; Ctrl+Z on the map or Undo join puts them back (last 50); every join in the journal.</li>
 <li><span class="version">0.3.25</span><span class="when">2026-11-05</span> — Green spaces in three categories (Engine T21): green_alignment (tree rows, grass strips along streets), green_landscaped (parks, gardens, playgrounds), green_unlandscaped (meadow, scrub, wood). New external source OpenStreetMap green spaces (ticked); a face without a code at least half in one category gets that class, a coded parcel keeps its class and gets the category in the attribute &#x27;green&#x27;. Own green sources with a category field. Review: buttons and keys 1 / 2 / 3; each category styled and written as its own DXF layer.</li>
 <li><span class="version">0.3.24</span><span class="when">2026-11-05</span> — The progress of a long step is drawn on the button that started it (blue fill, percent, what it does now in a second line); a click on that button stops it; meanwhile the other buttons wait; on another tab the percent is on the tab of the running button. The tab bar stays in place: every tab page scrolls by itself, and the tabs, the sheet list and the log share the dock through splitters. Engine T20b: OSM centrelines no longer spoil the drawing where they ride on kerbs and sidewalks - street faces are united only across lines the centreline crosses at 45 degrees or more, a band under 3.5 m is never a street by the centreline alone, sidewalk strips are not joined to the carriageway.</li>
@@ -567,7 +593,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
   <div>
     <h1>MapQuilt</h1>
     <div class="sub">Asamblare raster, georeferențiere și vectorizare automată a planurilor cadastrale scanate, în QGIS</div>
-    <div class="ver">versiunea 0.3.26 · manual generat la 2026-11-05 din <code>06-plugin/help/mapquilt/ro</code> · <a href="https://raduandrei-source.github.io/MapQuilt/">varianta online</a></div>
+    <div class="ver">versiunea 0.3.27 · manual generat la 2026-11-05 din <code>06-plugin/help/mapquilt/ro</code> · <a href="https://raduandrei-source.github.io/MapQuilt/">varianta online</a></div>
   </div>
 </header>
 <h2 id="ro-ce-este-mapquilt">Ce este MapQuilt<a class="anchor" href="#ro-ce-este-mapquilt" title="Permanent link">¶</a></h2>
@@ -710,6 +736,31 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 </ul>
 <p>La străzi, dați atributul care ține numele străzii (<em>Street name field</em>): fețele se unesc stradă cu stradă, după nume. La spațiile verzi, dați atributul care ține categoria (<em>Green category field</em>: <code>alignment</code>, <code>landscaped</code>, <code>unlandscaped</code> sau <code>grass</code>; o linie contează ca șir de arbori, adică de aliniament). <strong>Edit…</strong> modifică una de-a dvs. (una din plugin se copiază ca a dvs.), <strong>Remove</strong> șterge una de-a dvs.</p>
 <p><strong>Partajare.</strong> <strong>Export…</strong> scrie sursa selectată (sau toate ale dvs.) ca un fișier <code>.json</code> mic; altcineva o adaugă cu <strong>Import…</strong>. Ca să oferiți o sursă tuturor utilizatorilor MapQuilt, deschideți un issue cu fișierul în <a href="https://github.com/raduandrei-source/MapQuilt/issues">depozitul MapQuilt</a>; după verificare, intră în lista comună, pe care <strong>Shared</strong> o descarcă (sursele comune vin nebifate). Spuneți licența: se listează doar sursele ai căror termeni permit asta.</p>
+<h3 id="ro-drawing-contururile-clădirilor">Drawing: contururile clădirilor<a class="anchor" href="#ro-drawing-contururile-clădirilor" title="Permanent link">¶</a></h3>
+<p>Cum ies contururile clădirilor din Extract (se aplică la următorul Extract; proiectul ține minte alegerea):</p>
+<table>
+<thead>
+<tr>
+<th>Alegere</th>
+<th>Ce face</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Squared</strong> (recomandat)</td>
+<td>toate vârfurile desenului se ajustează deodată (metoda celor mai mici pătrate): pereții aflați la cel mult 12° de axa clădirii devin exact paraleli sau perpendiculari, și la colțurile comune cu limitele de lot; vecinii rămân lipiți; niciun vârf nu se mută mai mult de 1 m (T22)</td>
+</tr>
+<tr>
+<td>Straightened</td>
+<td>metoda veche (T12): pereții fixați pe axă între capete fixe, deci un colț unde se întâlnesc trei linii rămâne cum e desenat</td>
+</tr>
+<tr>
+<td>As drawn</td>
+<td>doar zimții pixelilor se netezesc (0,3 m)</td>
+</tr>
+</tbody>
+</table>
+<p>Pe etalonul Țicău, Squared dă 9 vârfuri pe clădire (desenul de mână: 8) și 62 % din colțurile aproape drepte exact drepte, la aceeași calitate a potrivirii, fără să miște limitele de lot. Un Engine mai vechi de 0.6 nu are Squared: Extract folosește atunci Straightened și spune asta.</p>
 <h3 id="ro-manualul">? — manualul<a class="anchor" href="#ro-manualul" title="Permanent link">¶</a></h3>
 <p>Butonul <strong>?</strong> de lângă taburi deschide acest manual: copia livrată cu pluginul (<code>mapquilt/help/index.html</code>, merge fără internet), iar dacă lipsește, varianta online.</p>
 <h2 id="ro-tabul-raster-scanările">Tabul Raster — scanările<a class="anchor" href="#ro-tabul-raster-scanările" title="Permanent link">¶</a></h2>
@@ -894,7 +945,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <p>Pentru fiecare pereche de foi vecine, fețele care ating banda cusăturii (± toleranța, implicit 1,5 m = percentila 90 a zgomotului măsurat), de aceeași clasă și cu intervale suprapuse pe linia comună, se unesc; muchiile marcate „cusătură” se șterg și fețele se repoligonizează. Nimic nu se mută, nimic nu se deformează. Pe foile DXF se unesc și capetele liniilor. Fețele deja unite nu se mai potrivesc a doua oară, deci Stitch se poate rula iar după un Import nou.</p>
 <h3 id="ro-7-export-dxf">7 · Export DXF<a class="anchor" href="#ro-7-export-dxf" title="Permanent link">¶</a></h3>
 <p>Scrie DXF-ul cu câte un strat pe clasă (<code>building</code>, <code>parcel</code>, <code>street</code>, <code>annex</code>, <code>other</code>; pe foile DXF și liniile), în CRS-ul țintă, plus un raport JSON (numărătorile, fețele revizuite, cusăturile). Straturile se copiază întâi în memorie, ca GeoPackage-ul în mod WAL să nu dea un DXF gol.</p>
-<p>Simplificarea și ortogonalizarea contururilor (parametrul <code>regularize</code> al Engine-ului: <code>none</code>, <code>simplify</code>, <code>orthogonal</code>) se fac pe muchiile comune, cu joncțiunile fixe, ca vecinii să rămână lipiți; pentru desene „ca de mână” recomandarea este <code>orthogonal</code> (23 → 11 vârfuri pe clădire la aceeași calitate).</p>
+<p>Simplificarea și îndreptarea contururilor (⚙ › Drawing › Building outlines; parametrul <code>regularize</code> al Engine-ului: <code>none</code>, <code>orthogonal</code>, <code>squared</code>) se fac pe muchiile comune, ca vecinii să rămână lipiți; <strong>Squared</strong>, implicit, ajustează toate vârfurile deodată și face drepte și colțurile de pe limitele de lot (23 → 9 vârfuri pe clădire la aceeași calitate).</p>
 <h2 id="ro-jurnalul-bara-de-stare-stop">Jurnalul, bara de stare, Stop<a class="anchor" href="#ro-jurnalul-bara-de-stare-stop" title="Permanent link">¶</a></h2>
 <h3 id="ro-jurnalul-proiectului">Jurnalul proiectului<a class="anchor" href="#ro-jurnalul-proiectului" title="Permanent link">¶</a></h3>
 <p>Fiecare rulare a unui pas se scrie în <code>project.json</code> (<code>journal</code>: pas, dată, versiunea pluginului, un rând de rezumat; <code>steps</code>: ultima rulare a fiecărui pas). Sub taburi, rândul „Last … · Next …” spune unde s-a ajuns, fiecare buton are în tooltip ultima lui rulare, iar la deschiderea proiectului jurnalul apare în log. Starea punctelor colorate vine din datele foilor (cadre, lanțuri, extrageri), nu din jurnal, deci un proiect scris de o versiune veche e descris corect.</p>
@@ -973,7 +1024,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <li><strong>Adnotări</strong> — textele și cercurile-indicator se detectează și se mască; liniile întrerupte de ele se refac („bridging”).</li>
 <li><strong>Grosimea liniei</strong> — distanța până la fundal pe cerneala curățată, înainte de subțiere; pragul Otsu desparte liniile groase (contur de clădire) de cele subțiri (limite).</li>
 <li><strong>Scheletul → muchii comune</strong> — subțiere, tăierea ramurilor scurte (vectorizat: 340 s → 2 s pe foaie), lipirea capetelor libere, segmente de pixeli unite în polilinii între joncțiuni, simplificate cu capetele fixe.</li>
-<li><strong>Fețe și clase</strong> — poligonizarea muchiilor; fiecare față primește clasa după, în ordine: eticheta din interior (C → clădire, DS/DP → stradă, CR/CC/CAT → parcelă), indicatorul în cerc, axa unei străzi care străbate fața pe lungime, departe de margini (T20), acoperirea amprentei OSM (înregistrată local pe schelet), topologia (o insulă într-un gol e clădire), forma (benzi lungi = străzi), grosimea conturului; fețele mici cu X sunt anexe. 3a (T19): fețele clădire din aceeași amprentă OSM se unesc. 3a′ (T20): fețele stradă ale aceleiași străzi (același nume, altfel aceeași cale OSM) care se ating se unesc — doar peste o linie pe care axa o taie la 45° sau mai mult, așa că o bordură sau linia unui trotuar de-a lungul străzii rămâne și acolo unde OSM o calcă (T20b); o fâșie mai îngustă de 3,5 m (un trotuar) nu devine stradă doar din axă, iar trotuarele nu se lipesc de carosabil. 3c (T21): o față fără cod, cel puțin pe jumătate în spații verzi OSM de aceeași categorie, devine <code>green_alignment</code>, <code>green_landscaped</code> sau <code>green_unlandscaped</code>; o parcelă codată primește doar categoria ca atribut. 3b (T12): simplificare / ortogonalizare pe graf, cu joncțiunile fixe.</li>
+<li><strong>Fețe și clase</strong> — poligonizarea muchiilor; fiecare față primește clasa după, în ordine: eticheta din interior (C → clădire, DS/DP → stradă, CR/CC/CAT → parcelă), indicatorul în cerc, axa unei străzi care străbate fața pe lungime, departe de margini (T20), acoperirea amprentei OSM (înregistrată local pe schelet), topologia (o insulă într-un gol e clădire), forma (benzi lungi = străzi), grosimea conturului; fețele mici cu X sunt anexe. 3a (T19): fețele clădire din aceeași amprentă OSM se unesc. 3a′ (T20): fețele stradă ale aceleiași străzi (același nume, altfel aceeași cale OSM) care se ating se unesc — doar peste o linie pe care axa o taie la 45° sau mai mult, așa că o bordură sau linia unui trotuar de-a lungul străzii rămâne și acolo unde OSM o calcă (T20b); o fâșie mai îngustă de 3,5 m (un trotuar) nu devine stradă doar din axă, iar trotuarele nu se lipesc de carosabil. 3c (T21): o față fără cod, cel puțin pe jumătate în spații verzi OSM de aceeași categorie, devine <code>green_alignment</code>, <code>green_landscaped</code> sau <code>green_unlandscaped</code>; o parcelă codată primește doar categoria ca atribut. 3b (T12, T22): simplificare pe graf, apoi îndreptare: implicit o compensare prin metoda celor mai mici pătrate a tuturor vârfurilor (și a joncțiunilor), cu condiția „exact pe axa clădirii” pe fiecare perete aflat la cel mult 12° de ea, niciun vârf mutat mai mult de 1 m; modul vechi ține joncțiunile fixe.</li>
 <li><strong>Dizolvare</strong> — clădirile se atașează parcelei-gazdă cu latura comună cea mai lungă; fâșiile necodate se varsă în vecin.</li>
 </ol>
 <p>Măsurat pe dala Țicău față de etalonul desenat în Rhino: PQ clădiri 0,64 (precizie 0,80, regăsire 0,66, IoU mediu 0,89); parcele 0,34; fracția de contur partajat 0 → 0,63 prin trecerea la graful planar (T6b).</p>
@@ -1024,6 +1075,7 @@ kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line
 <h2 id="ro-jurnalul-versiunilor-changelog">Jurnalul versiunilor (changelog)<a class="anchor" href="#ro-jurnalul-versiunilor-changelog" title="Permanent link">¶</a></h2>
 <p>Din <code>metadata.txt</code> al pluginului, cea mai nouă versiune prima (în engleză).</p>
 <ul class="changelog">
+<li><span class="version">0.3.27</span><span class="when">2026-11-05</span> — Squared building outlines (Engine 0.6.0, T22): a least-squares adjustment of every vertex of the drawing at once, junctions included - walls within 12 degrees of the building&#x27;s axis exactly parallel or perpendicular, corners on lot limits square too, neighbours stay joined, no vertex moves more than 1 m. Settings &gt; Drawing &gt; Building outlines: Squared (default), Straightened (the older T12 method), As drawn. Țicău: 9 vertices per building (reference 8), 62 % of the near-right corners exactly square (Straightened 41 %), same PQ, lot limits no longer pushed (parcel PQ 0.337 vs 0.321). An older Engine falls back to Straightened.</li>
 <li><span class="version">0.3.26</span><span class="when">2026-11-05</span> — Join faces (Vector tab, Edit box): press inside a face, drag onto a neighbour of the same class and release - the two become one (codes of both, buildings counted together, review state edited); green while they can be joined, red with the reason in the box at the cursor when not; gaps up to 0.3 m closed; Ctrl+Z on the map or Undo join puts them back (last 50); every join in the journal.</li>
 <li><span class="version">0.3.25</span><span class="when">2026-11-05</span> — Green spaces in three categories (Engine T21): green_alignment (tree rows, grass strips along streets), green_landscaped (parks, gardens, playgrounds), green_unlandscaped (meadow, scrub, wood). New external source OpenStreetMap green spaces (ticked); a face without a code at least half in one category gets that class, a coded parcel keeps its class and gets the category in the attribute &#x27;green&#x27;. Own green sources with a category field. Review: buttons and keys 1 / 2 / 3; each category styled and written as its own DXF layer.</li>
 <li><span class="version">0.3.24</span><span class="when">2026-11-05</span> — The progress of a long step is drawn on the button that started it (blue fill, percent, what it does now in a second line); a click on that button stops it; meanwhile the other buttons wait; on another tab the percent is on the tab of the running button. The tab bar stays in place: every tab page scrolls by itself, and the tabs, the sheet list and the log share the dock through splitters. Engine T20b: OSM centrelines no longer spoil the drawing where they ride on kerbs and sidewalks - street faces are united only across lines the centreline crosses at 45 degrees or more, a band under 3.5 m is never a street by the centreline alone, sidewalk strips are not joined to the carriageway.</li>
